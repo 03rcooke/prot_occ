@@ -1,8 +1,5 @@
 # title: pa_pr_fun
 # description: function to rasterize protected areas at 100m and extract proportion protected at 1km
-# author(s): Robert Cooke (roboke@ceh.ac.uk)
-# date created: 28/10/2020
-# date modified: 28/10/2020
 
 pa_pr <- function(pa, rast_temp, gr_ref, yr) {
   

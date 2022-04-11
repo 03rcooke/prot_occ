@@ -53,7 +53,11 @@ library(gghalves)
 rasterOptions(tmpdir = "temp")
 
 # source pa_pr function
-source("/data/notebooks/rstudio-proareas/proarea/pa_pr_fun.R")
+source("pa_pr_fun.R")
+# source beta_tbi_func function
+source("beta_tbi_func.R")
+# source est_plot_func function
+source("est_plot_func.R")
 
 # load_rdata function
 # loads an RData file, and assigns it to an object name
@@ -168,10 +172,10 @@ First we extract the occupancy data for all taxonomic groups we are interested i
 
 ```{r}
 
-# # Taxonomic group(s)
-# taxa <- c("Ants", "Bees", "Hoverflies", "Ladybirds", "Spiders", "Wasps")
-# ntax <- length(taxa)
-# 
+# Taxonomic group(s)
+taxa <- c("Ants", "Bees", "Hoverflies", "Ladybirds", "Spiders", "Wasps")
+ntax <- length(taxa)
+
 # regions <- c("GB", "pa", "unp")
 # nregions <- length(regions)
 # 
@@ -203,22 +207,20 @@ First we extract the occupancy data for all taxonomic groups we are interested i
 
 ```{r}
 
-taxa <- c("Ants", "Bees", "Hoverflies", "Ladybirds", "Spiders", "Wasps")
-
-## observation metadata
-
-meta_pa <- lapply(taxa, function(x) {
-  
-  load_rdata(paste0("data/filtered/", x, "_all_pa_samp.rdata")) %>% 
-    .[[2]] %>% 
-    dplyr::mutate(tax_grp = x)
-  
-}) %>% 
-  dplyr::bind_rows(.) 
-
-pass_keep <- meta_pa %>% 
-  dplyr::filter(rot_EqualWt_r_pa == TRUE) %>% 
-  .$Species_r_pa
+# ## observation metadata
+# 
+# meta_pa <- lapply(taxa, function(x) {
+#   
+#   load_rdata(paste0("data/filtered/", x, "_all_pa_samp.rdata")) %>% 
+#     .[[2]] %>% 
+#     dplyr::mutate(tax_grp = x)
+#   
+# }) %>% 
+#   dplyr::bind_rows(.) 
+# 
+# pass_keep <- meta_pa %>% 
+#   dplyr::filter(rot_EqualWt_r_pa == TRUE) %>% 
+#   .$Species_r_pa
 
 ```
 
@@ -228,88 +230,78 @@ Here we read in prepared occupancy data
 
 ```{r}
 
-# read in filtered data
-occ_read <- function(x, reg) {
-  
-  load_rdata(paste0("data/filtered/", x, "_all_", reg, "_samp.rdata")) %>% 
-    .[[1]] %>% 
-    dplyr::mutate(grp = x)
-  
-}
-
-# focal years 1990 to 2018
-foc_yrs <- paste0("year_", startyear:endyear)
-
-## pa
-
-occ_pa_prep <- lapply(taxa, function(x) occ_read(x = x, reg = "pa")) %>%
-  dplyr::bind_rows(.) %>%
-  # trim to focal years 1990 to 2018
-  dplyr::select(foc_yrs, iteration, species, grp) %>%
-  # add region aggregate name
-  dplyr::mutate(prot = "pa")
-
-spp_pa <- data.frame(spp = unique(occ_pa_prep$species))
-
-## unp
-
-occ_unp_prep <- lapply(taxa, function(x) occ_read(x = x, reg = "unp")) %>%
-  dplyr::bind_rows(.) %>%
-  # trim to focal years 1990 to 2018
-  dplyr::select(foc_yrs, iteration, species, grp)  %>%
-  # add region aggregate name
-  dplyr::mutate(prot = "unp")
-
-spp_unp <- data.frame(spp = unique(occ_unp_prep$species))
-
-# unify protected and unprotected species lists
-
-all_spp <- dplyr::inner_join(spp_pa, spp_unp) %>% 
-  # remove non-predatory ladybirds
-  dplyr::filter(!spp %in% c("halyzia sedecimguttata", "henosepilachna argus", "psyllobora vigintiduopunctata", "subcoccinella vigintiquattuorpunctata", "tytthaspis sedecimpunctata")) %>% 
-  # remove non-natives
-  dplyr::filter(!spp %in% c("harmonia axyridis", "steatoda nobilis"))
-
-# update to match species lists
-occ_pa_prep <- dplyr::filter(occ_pa_prep, species %in% all_spp$spp)
-occ_unp_prep <- dplyr::filter(occ_unp_prep, species %in% all_spp$spp)
-
-# remove species that didn't pass model quality threshold
-occ_pa_prep <- dplyr::filter(occ_pa_prep, species %in% pass_keep)
-occ_unp_prep <- dplyr::filter(occ_unp_prep, species %in% pass_keep)
-
-GB_spp <- occ_pa_prep %>% 
-  dplyr::distinct(species, .keep_all = TRUE) %>% 
-  dplyr::count(grp) %>% 
-  tibble::add_row(grp = "Overall", n = sum(.$n))
-
-occ_GB <- lapply(taxa, function(x) occ_read(x = x, reg = "GB")) %>%
-  dplyr::bind_rows(.) %>%
-  # trim to focal years 1990 to 2018
-  dplyr::select(foc_yrs, iteration, species, grp)  %>%
-  # add region aggregate name
-  dplyr::mutate(prot = "GB") %>% 
-  # match species list
-  dplyr::filter(species %in% occ_pa_prep$species) 
-
-# new iteration numbers - old ones produce weird results
-set.seed(186875)
-rseq <- as.vector(replicate(nrow(occ_pa_prep) / 999, sample(1:999, 999, replace = FALSE)))
-
-occ_pa_prep <- occ_pa_prep %>% 
-  dplyr::mutate(iteration = rseq)
-
-occ_unp_prep <- occ_unp_prep %>% 
-  dplyr::mutate(iteration = rseq)
-
-occ_GB <- occ_GB %>% 
-  dplyr::mutate(iteration = rseq)
+# # read in filtered data
+# occ_read <- function(x, reg) {
+#   
+#   load_rdata(paste0("data/filtered/", x, "_all_", reg, "_samp.rdata")) %>% 
+#     .[[1]] %>% 
+#     dplyr::mutate(grp = x)
+#   
+# }
+# 
+# # focal years 1990 to 2018
+# foc_yrs <- paste0("year_", startyear:endyear)
+# 
+# ## pa
+# 
+# occ_pa_prep <- lapply(taxa, function(x) occ_read(x = x, reg = "pa")) %>%
+#   dplyr::bind_rows(.) %>%
+#   # trim to focal years 1990 to 2018
+#   dplyr::select(foc_yrs, iteration, species, grp) %>%
+#   # add region aggregate name
+#   dplyr::mutate(prot = "pa")
+# 
+# spp_pa <- data.frame(spp = unique(occ_pa_prep$species))
+# 
+# ## unp
+# 
+# occ_unp_prep <- lapply(taxa, function(x) occ_read(x = x, reg = "unp")) %>%
+#   dplyr::bind_rows(.) %>%
+#   # trim to focal years 1990 to 2018
+#   dplyr::select(foc_yrs, iteration, species, grp)  %>%
+#   # add region aggregate name
+#   dplyr::mutate(prot = "unp")
+# 
+# spp_unp <- data.frame(spp = unique(occ_unp_prep$species))
+# 
+# # unify protected and unprotected species lists
+# 
+# all_spp <- dplyr::inner_join(spp_pa, spp_unp) %>% 
+#   # remove non-predatory ladybirds
+#   dplyr::filter(!spp %in% c("halyzia sedecimguttata", "henosepilachna argus", "psyllobora vigintiduopunctata", "subcoccinella vigintiquattuorpunctata", "tytthaspis sedecimpunctata")) %>% 
+#   # remove non-natives
+#   dplyr::filter(!spp %in% c("harmonia axyridis", "steatoda nobilis"))
+# 
+# # update to match species lists
+# occ_pa_prep <- dplyr::filter(occ_pa_prep, species %in% all_spp$spp)
+# occ_unp_prep <- dplyr::filter(occ_unp_prep, species %in% all_spp$spp)
+# 
+# # remove species that didn't pass model quality threshold
+# occ_pa_prep <- dplyr::filter(occ_pa_prep, species %in% pass_keep)
+# occ_unp_prep <- dplyr::filter(occ_unp_prep, species %in% pass_keep)
+# 
+# GB_spp <- occ_pa_prep %>% 
+#   dplyr::distinct(species, .keep_all = TRUE) %>% 
+#   dplyr::count(grp) %>% 
+#   tibble::add_row(grp = "Overall", n = sum(.$n))
+# 
+# occ_GB <- lapply(taxa, function(x) occ_read(x = x, reg = "GB")) %>%
+#   dplyr::bind_rows(.) %>%
+#   # trim to focal years 1990 to 2018
+#   dplyr::select(foc_yrs, iteration, species, grp)  %>%
+#   # add region aggregate name
+#   dplyr::mutate(prot = "GB") %>% 
+#   # match species list
+#   dplyr::filter(species %in% occ_pa_prep$species) 
 
 ```
 
 # Functional groups
 
 ```{r}
+
+occ_pa_prep <- readRDS("data/occ_pa_prep.rds")
+occ_unp_prep <- readRDS("data/occ_unp_prep.rds")
 
 # duplicate hoverflies as there are primary contributors to two ecosystem functions
 hov_pa <- occ_pa_prep %>% 
@@ -322,8 +314,6 @@ hov_unp <- occ_unp_prep %>%
 
 # ecosystem functions
 func_lookup <- data.frame(grp = c("Ants", "Hoverflies", "Ladybirds", "Spiders", "Wasps", "Bees", "Hoverflies2"), func = c(rep("Predators", 5), rep("Pollinators", 2)))
-
-# "E&D",
 
 occ_pa_func <- occ_pa_prep %>% 
   dplyr::bind_rows(hov_pa) %>% 
@@ -344,7 +334,7 @@ GB_func_spp <- occ_pa %>%
   dplyr::count(grp)
 
 # tidy up
-rm(all_spp, hov_pa, hov_unp, occ_pa_func, occ_pa_prep, occ_unp_func, occ_unp_prep, spp_pa, spp_unp); gc()
+rm(hov_pa, hov_unp, occ_pa_func, occ_pa_prep, occ_unp_func, occ_unp_prep); gc()
 
 ```
 
@@ -416,81 +406,6 @@ sprich_diff <- function(spr_df_pa, spr_df_unp) {
 
 spr_diff_out <- sprich_diff(spr_df_pa = spr_pa, spr_df_unp = spr_unp)
 
-est_plot_func <- function(grp, est_df, est_diff, vari, lim = NULL, axlab) {
-  
-  low_lim <- lim[[1]]
-  upp_lim <- lim[[2]]
-  
-  vari_diff <- paste0(vari, "_diff")
-  vari_sig <- paste0(vari, "_sig")
-  
-  df <- est_df %>% 
-    dplyr::filter(grp == !!grp)
-  
-  diff_df <- est_diff[[1]] %>% 
-    dplyr::filter(grp == !!grp)
-  
-  diff_av <- est_diff[[2]] %>% 
-    dplyr::filter(grp == !!grp)
-  
-  numb <- GB_func_spp %>% 
-    dplyr::filter(grp == !!grp)
-  
-  # relative effect size
-  eff <- effsize::cohen.d(as.formula(paste0(vari, " ~ prot")), data = df, hedges.correction = TRUE)
-  
-  eff_text <- paste0(sprintf("%.1f", -eff$estimate), " [", sprintf("%.1f", -eff$conf.int[[2]]), ", ", sprintf("%.1f", -eff$conf.int[[1]]), "]")
-  
-  meds <- df %>% 
-    dplyr::group_by(prot) %>% 
-    dplyr::summarise_at(vars(vari), list(meds = ~median)) %>% 
-    dplyr::mutate(diff = c(0, diff_av[ , paste0(vari_diff, "_median")][[1]])) %>% 
-    dplyr::mutate(colr = c("#EE7733", "#0077BB"))
-  
-  est_plot <- ggplot(df, aes(x = prot, y = .data[[vari]])) +
-    # median lines
-    geom_hline(data = meds, aes(yintercept = meds, colour = prot), lty = 2, lwd = 1) +
-    # jittered points
-    geom_jitter(aes(colour = prot), alpha = 0.4)  +
-    # scales
-    scale_y_continuous(name = axlab, limits = c(low_lim + meds[1,2][[1]], upp_lim + meds[1,2][[1]])) +
-    scale_colour_manual(values = c("#EE7733", "#0077BB")) +
-    labs(x = "") +
-    theme(legend.position = "none")
-  
-  est_diff_plot <- ggplot(diff_df, aes(x = "", y = .data[[vari_diff]])) +
-    # median lines
-    geom_hline(data = meds, aes(yintercept = diff), colour = meds$colr, lty = 2, lwd = 1) +
-    # half violin
-    gghalves::geom_half_violin(aes(fill = .data[[vari_sig]]), side = "r", colour = NA, scale = "count", alpha = 0.6) +
-    # 95% CrI
-    geom_linerange(data = diff_av, aes(ymax = .data[[paste0(vari_diff, "_upp_ci")]], ymin = .data[[paste0(vari_diff, "_low_ci")]], x = "", colour = .data[[vari_sig]]), size = 1, inherit.aes = FALSE) +
-    # median
-    geom_point(data = diff_av, aes(y = .data[[paste0(vari_diff, "_median")]], colour = .data[[vari_sig]]), size = 10, shape = "-") +
-    # relative effect size
-    annotate("text", x = 1, y = min(diff_df[vari_diff]), label = eff_text) +
-    # scales
-    scale_y_continuous(name = "Difference", position = "right", limits = c(low_lim, upp_lim)) +
-    scale_fill_manual(values = c("#33BBEE", "grey50", "#009988"), drop = FALSE) +
-    scale_colour_manual(values = c("#33BBEE", "grey50", "#009988"), drop = FALSE) +
-    labs(x = "") +
-    theme(legend.position = "none",
-          axis.ticks.x = element_blank())
-  
-  # est_title <- cowplot::ggdraw() +
-  #   cowplot::draw_label(paste0(grp, " (n = ", format(numb$n, big.mark = ","), ")"), fontface = 'bold')
-  
-  est_prep_plot <- cowplot::plot_grid(est_plot, est_diff_plot, rel_widths = c(1, 0.8)) #%>% 
-    #cowplot::plot_grid(est_title, ., nrow = 2, rel_heights = c(0.08, 1))
-  
-  return(list(est_prep_plot,
-              meds,
-              diff_av,
-              eff,
-              est_diff_plot))
-  
-}
-
 spr_over <- est_plot_func(grp = "Overall", est_df = spr_comb, est_diff = spr_diff_out, vari = "spr", lim = c(-36, 36), axlab = "Species richness")
 
 # View(spr_over[[2]])
@@ -504,7 +419,7 @@ spr_poll <- est_plot_func(grp = "Pollinators", est_df = spr_comb, est_diff = spr
 spr_pred <- est_plot_func(grp = "Predators", est_df = spr_comb, est_diff = spr_diff_out, vari = "spr", lim = c(-31, 31), axlab = "Species richness")
 
 # # save plots
-# cowplot::save_plot("outputs/sprich_over.png", spr_over[[1]], base_height = 6, base_width = 8, dpi = 600)
+# cowplot::save_plot("outputs/sprich_over.png", spr_over[[1]], base_height = 6, base_width = 8, dpi = 300)
 
 ```
 
@@ -715,69 +630,19 @@ chng_pred <- est_plot_func(grp = "Predators", est_df = chng_comb, est_diff = chn
 chng_comb_over <- cowplot::plot_grid(msi_over, chng_over[[1]], nrow = 2, labels = "AUTO")
 
 # # save plot
-# cowplot::save_plot("outputs/chng_comb_over.png", chng_comb_over, base_height = 11, base_width = 9, dpi = 600)
+# cowplot::save_plot("outputs/chng_comb_over.png", chng_comb_over, base_height = 11, base_width = 9, dpi = 300)
 
 ```
 
 # Temporal beta diversity
 
-# Legendre
-
 ```{r}
 
-# beta_tbi_func <- function(grp, it, occ_df_pa, occ_df_unp) {
-# 
-#   # select useful data
-#   df_pa <- dplyr::select(occ_df_pa, dplyr::starts_with("year"), iteration, species, grp)
-# 
-#   df_unp <- dplyr::select(occ_df_unp, dplyr::starts_with("year"), iteration, species, grp)
-# 
-#   # prepare data as wide species dataframe for first and last year
-#   bprep_pa <- df_pa %>%
-#     dplyr::filter(grp == !!grp, iteration == it) %>%
-#     # only non-na columns
-#     dplyr::select(which(colSums(is.na(.)) < 1)) %>%
-#     # select first and last year
-#     dplyr::select(1, (ncol(.) - 4), species) %>%
-#     # make truly long
-#     tidyr::gather(year, occ, dplyr::starts_with("year")) %>%
-#     # spread to wide
-#     tidyr::spread(species, occ) %>%
-#     dplyr::select(-year)
-# 
-#   bprep_unp <- df_unp %>%
-#     dplyr::filter(grp == !!grp, iteration == it) %>%
-#     # only non-na columns
-#     dplyr::select(which(colSums(is.na(.)) < 1)) %>%
-#     # select first and last year
-#     dplyr::select(1, (ncol(.) - 4), species) %>%
-#     # make truly long
-#     tidyr::gather(year, occ, dplyr::starts_with("year")) %>%
-#     # spread to wide
-#     tidyr::spread(species, occ) %>%
-#     dplyr::select(-year)
-# 
-#   # time 1
-#   t1 <- bind_rows(bprep_pa[1,], bprep_unp[1,])
-# 
-#   # time 2
-#   t2 <- bind_rows(bprep_pa[2,], bprep_unp[2,])
-# 
-#   # calculate tbi
-#   tbi <- adespatial::TBI(t1, t2)
-# 
-#   # compile data in easy format
-#   tbi_df <- data.frame(tbi_val = tbi$TBI, loss = tbi$BCD.mat$`B/(2A+B+C)`, gain = tbi$BCD.mat$`C/(2A+B+C)`, dir = tbi$BCD.mat$Change, prot = c("Protected", "Unprotected"), iteration = it, grp = grp)
-# 
-#   return(tbi_df)
-# 
-# }
-# 
 # beta_tbi <- lapply(unique(occ_pa$grp), function(xgrp) {
 # 
 #   out <- lapply(1:999, function(x) beta_tbi_func(grp = xgrp, it = x, occ_df_pa = occ_pa, occ_df_unp = occ_unp) %>%
 #     # bind across iterations
-#   dplyr::bind_rows()
+#   dplyr::bind_rows(.))
 # 
 # }) %>%
 #   # bind across groups
@@ -844,40 +709,26 @@ beta_poll <- est_plot_func(grp = "Pollinators", est_df = beta_tbi, est_diff = be
 
 beta_pred <- est_plot_func(grp = "Predators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "tbi_val", lim = c(-0.025, 0.025), axlab = "Temporal\nbeta diversity")
 
-# beta_comb_plot <- cowplot::plot_grid(NULL, beta_over[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "A", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(beta_poll[[1]], beta_pred[[1]], nrow = 1, labels = c("B", "C")), nrow = 2)
-
 # loss
 
 loss_over <- est_plot_func(grp = "Overall", est_df = beta_tbi, est_diff = beta_diff_out, vari = "loss", lim = c(-0.027, 0.027), axlab = "Loss")
-
-# View(loss_over[[2]])
-# View(loss_over[[3]])
-# View(loss_over[[4]])
 
 loss_poll <- est_plot_func(grp = "Pollinators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "loss", lim = c(-0.023, 0.023), axlab = "Loss")
 
 loss_pred <- est_plot_func(grp = "Predators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "loss", lim = c(-0.038, 0.038), axlab = "Loss")
 
-# loss_comb_plot <- cowplot::plot_grid(NULL, loss_over[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "A", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_poll[[1]], loss_pred[[1]], nrow = 1, labels = c("B", "C")), nrow = 2)
-
 # gain
 
 gain_over <- est_plot_func(grp = "Overall", est_df = beta_tbi, est_diff = beta_diff_out, vari = "gain", lim = c(-0.024, 0.024), axlab = "Gain")
-
-# View(gain_over[[2]])
-# View(gain_over[[3]])
-# View(gain_over[[4]])
 
 gain_poll <- est_plot_func(grp = "Pollinators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "gain", lim = c(-0.031, 0.031), axlab = "Gain")
 
 gain_pred <- est_plot_func(grp = "Predators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "gain", lim = c(-0.031, 0.031), axlab = "Gain")
 
-# gain_comb_plot <- cowplot::plot_grid(NULL, gain_over[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "A", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(gain_poll[[1]], gain_pred[[1]], nrow = 1, labels = c("B", "C")), nrow = 2)
-
 beta_over_plot <- cowplot::plot_grid(NULL, beta_over[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "A", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_over[[1]], gain_over[[1]], nrow = 1, labels = c("B", "C")), nrow = 2)
 
 # # save plot
-# cowplot::save_plot("outputs/beta_over.png", beta_over_plot, base_height = 8, base_width = 12, dpi = 600)
+# cowplot::save_plot("outputs/beta_over.png", beta_over_plot, base_height = 8, base_width = 12, dpi = 300)
 
 #### Pollinators ####
 
@@ -886,14 +737,14 @@ beta_poll_plot <- cowplot::plot_grid(NULL, beta_poll[[1]], NULL, nrow = 1, rel_w
 poll_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_poll[[1]], NULL, labels = c("", "A", ""), rel_widths = c(0.4, 1, 0.4), ncol = 3), cowplot::plot_grid(msi_poll, chng_poll[[1]], labels = c("B", "C"), ncol = 2), beta_poll_plot, nrow = 3, rel_heights = c(1, 1, 2))
 
 # # save plot
-# cowplot::save_plot("outputs/poll.png", poll_plot, base_height = 12, base_width = 10, dpi = 600)
+# cowplot::save_plot("outputs/poll.png", poll_plot, base_height = 12, base_width = 10, dpi = 300)
 
 beta_pred_plot <- cowplot::plot_grid(NULL, beta_pred[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "D", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_pred[[1]], gain_pred[[1]], nrow = 1, labels = c("E", "F")), nrow = 2)
 
 pred_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_pred[[1]], NULL, labels = c("", "A", ""), rel_widths = c(0.4, 1, 0.4), ncol = 3), cowplot::plot_grid(msi_pred, chng_pred[[1]], labels = c("B", "C"), ncol = 2), beta_pred_plot, nrow = 3, rel_heights = c(1, 1, 2))
 
 # # save plot
-# cowplot::save_plot("outputs/pred.png", pred_plot, base_height = 12, base_width = 10, dpi = 600)
+# cowplot::save_plot("outputs/pred.png", pred_plot, base_height = 12, base_width = 10, dpi = 300)
 
 ```
 
@@ -904,7 +755,7 @@ pred_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_pred[[1]], NULL, la
 # fig 1
 # plot of protected vs unprotected grid cells
 
-# actual sites used
+# sites used
 sites_orig <- readRDS("data/regions_non-crossed.rds")
 
 sites <- sites_orig %>% 
@@ -917,10 +768,12 @@ sites <- sites_orig %>%
   dplyr::select(grid_ref, prot)
 
 # # convert grid references to easting and northing
-# grcoord <- BRCmap::gr2sp_points(sites$grid_ref) %>% 
+# grcoord <- BRCmap::gr2sp_points(sites$grid_ref) %>%
 #   as.data.frame(.)
+# 
+# sites_gr <- dplyr::left_join(sites, grcoord, by = c("grid_ref" = "GRIDREF"))
 
-sites_gr <- dplyr::left_join(sites, grcoord, by = c("grid_ref" = "GRIDREF"))
+sites_gr <- readRDS("data/sites_gr.rds")
   
 pro_plot <- ggplot2::ggplot(data = sites_gr, aes(x = EASTING, y = NORTHING, fill = prot)) +
   geom_raster() +
@@ -929,9 +782,6 @@ pro_plot <- ggplot2::ggplot(data = sites_gr, aes(x = EASTING, y = NORTHING, fill
   theme_void() +
   theme(legend.title = element_blank(),
         legend.position = "bottom")
-
-# # save: pro_plot
-# cowplot::save_plot("outputs/pro.png", pro_plot, base_height = 5.8, base_width = 5, dpi = 300)
 
 euro <- map_data("world") %>% 
   dplyr::mutate(GB = as.factor(ifelse(subregion %in% c("Great Britain", "Wales", "Isle of Wight", "Scotland"), 1, 0)))
@@ -955,11 +805,7 @@ pro_sub_plot <- cowplot::ggdraw(pro_plot) +
   cowplot::draw_plot(euro_plot, 0.63, 0.55, 0.35, 0.35)
 
 # # save: pro_sub_plot
-# cowplot::save_plot("outputs/pro_sub.png", pro_sub_plot, base_height = 6, base_width = 6, dpi = 600)
-
-# # for occAssess
-# 
-# saveRDS(sites_gr, "data/sites_gr.rds")
+# cowplot::save_plot("outputs/pro_sub.png", pro_sub_plot, base_height = 6, base_width = 6, dpi = 300)
 
 ```
 
@@ -967,36 +813,40 @@ pro_sub_plot <- cowplot::ggdraw(pro_plot) +
 
 ```{r}
 
-meta_pa <- lapply(taxa, function(x) {
+# meta_pa <- lapply(taxa, function(x) {
+# 
+#   load_rdata(paste0("data/filtered/", x, "_all_pa_samp.rdata")) %>%
+#     .[[2]] %>%
+#     dplyr::mutate(tax_grp = x)
+# 
+# }) %>%
+#   dplyr::bind_rows(.) %>%
+#   dplyr::filter(Species_r_pa %in% occ_pa$species)
+# 
+# rec_pa <- meta_pa %>% 
+#   dplyr::group_by(tax_grp) %>% 
+#   dplyr::summarise(recs = sum(n_obs_regional_r_pa))
+# 
+# meta_unp <- lapply(taxa, function(x) {
+# 
+#   load_rdata(paste0("data/filtered/", x, "_all_unp_samp.rdata")) %>%
+#     .[[2]] %>%
+#     dplyr::mutate(tax_grp = x)
+# 
+# }) %>%
+#   dplyr::bind_rows(.) %>%
+#   dplyr::filter(Species_r_unp %in% occ_unp$species)
+# 
+# rec_unp <- meta_unp %>%
+#   dplyr::group_by(tax_grp) %>%
+#   dplyr::summarise(recs = sum(n_obs_regional_r_unp))
+# 
+# rec_all <- dplyr::bind_cols(rec_pa, rec_unp) %>% 
+#   dplyr::mutate(rec_all = recs + recs1)
+# 
+# saveRDS(rec_all, "data/rec_all.rds")
 
-  load_rdata(paste0("data/filtered/", x, "_all_pa_samp.rdata")) %>%
-    .[[2]] %>%
-    dplyr::mutate(tax_grp = x)
-
-}) %>%
-  dplyr::bind_rows(.) %>%
-  dplyr::filter(Species_r_pa %in% occ_pa$species)
-
-rec_pa <- meta_pa %>% 
-  dplyr::group_by(tax_grp) %>% 
-  dplyr::summarise(recs = sum(n_obs_regional_r_pa))
-
-meta_unp <- lapply(taxa, function(x) {
-
-  load_rdata(paste0("data/filtered/", x, "_all_unp_samp.rdata")) %>%
-    .[[2]] %>%
-    dplyr::mutate(tax_grp = x)
-
-}) %>%
-  dplyr::bind_rows(.) %>%
-  dplyr::filter(Species_r_unp %in% occ_unp$species)
-
-rec_unp <- meta_unp %>%
-  dplyr::group_by(tax_grp) %>%
-  dplyr::summarise(recs = sum(n_obs_regional_r_unp))
-
-rec_all <- dplyr::bind_cols(rec_pa, rec_unp) %>% 
-  dplyr::mutate(rec_all = recs + recs1)
+rec_all <- readRDS("data/rec_all.rds")
 
 sum(rec_all$rec_all)
 
@@ -1006,113 +856,109 @@ sum(rec_all$rec_all)
 
 ```{r}
 
-# function to convert first letter to uppercase
-firstup <- function(x) {
-  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
-  x
-}
-
-# function to tidy observations used in models
-# occ_pa and sites_gr needed
-obs <- function(tax_path, tax_grp, filetype, chained = FALSE, min_iter) {
-  
-  spp <- dplyr::filter(occ_pa, tax_grp == !!tax_grp)$species %>% 
-    unique(.) %>% 
-    firstup(.)
-  
-  all_out <- lapply(spp, function(sp) {
-    
-    if(isTRUE(chained)) {
-      
-      out_meta <- load_rdata(paste0(tax_path, sp, "_", min_iter, "_1.rdata"))
-      
-    } else {
-      
-      if(filetype == "rds") {
-        
-        out_meta <- readRDS(paste0(tax_path, sp, ".rds"))
-        
-        }
-    
-      else if(filetype == "rdata") {
-      
-        out_meta <- load_rdata(paste0(tax_path, sp, ".rdata"))
-      
-      }
-    }
-    
-    dat <- out_meta$model$data()
-    
-    dat_df <- data.frame(year = dat$Year, # year
-                         rec = dat$y, # records
-                         site = dat$Site) # sites
-
-    # site number to grid ref look-up
-    dat_site <- dat_df %>% 
-      dplyr::distinct(site) %>% 
-      dplyr::mutate(grid = unique(out_meta$sites_included[[1]]))
-    
-    region_site_pa <- dat[[paste0("r_", "pa")]][dat$Site]
-    region_site_unp <- dat[[paste0("r_", "unp")]][dat$Site]
-    
-    # sites included within region
-    dat_reg <- cbind(dat_df, region_site_pa, region_site_unp) %>% 
-      dplyr::left_join(dat_site)
-          
-    # subset to temporal window
-    dat_reg_pa <- dat_reg[dat_reg$region_site_pa == 1 & dat_reg$year >= (startyear - (out_meta$min_year - 1)) & dat_reg$year <= (endyear - (out_meta$min_year - 1)), ] %>% 
-      dplyr::filter(rec == 1) %>% 
-      dplyr::mutate(prot = "pa")
-    
-    dat_reg_unp <- dat_reg[dat_reg$region_site_unp == 1 & dat_reg$year >= (startyear - (out_meta$min_year - 1)) & dat_reg$year <= (endyear - (out_meta$min_year - 1)), ] %>% 
-      dplyr::filter(rec == 1) %>% 
-      dplyr::mutate(prot = "unp")
-    
-    dat_comb <- dplyr::bind_rows(dat_reg_pa, dat_reg_unp) %>% 
-      dplyr::mutate(year = (year + 1970) - 1) %>% 
-      dplyr::left_join(dplyr::select(sites_gr, -prot), by = c("grid" = "grid_ref")) %>% 
-      dplyr::mutate(species = tolower(sp)) %>% 
-      dplyr::mutate(tax_grp = tax_grp) %>% 
-      dplyr::select(species, tax_grp, prot, grid, EASTING, NORTHING, year)
-    
-  }) %>% 
-    dplyr::bind_rows()
-  
-  return(all_out)
-  
-}
-
-ants_obs <- obs(tax_path = "/data-s3/occmods/Ants/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Ants", filetype = "rdata")
-
-# saveRDS(ants_obs, "data/ants_obs.rds")
-
-bees_obs <- obs(tax_path = "/data-s3/occmods/Bees/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Bees", filetype = "rdata")
-
-# saveRDS(bees_obs, "data/bees_obs.rds")
-
-ed_obs <- obs(tax_path = "/data-s3/occmods/E&D/occmod_outputs/2021_Francesca/", tax_grp = "E&D", filetype = "rdata")
-
-# saveRDS(ed_obs, "data/ed_obs.rds")
-
-hover_obs <- obs(tax_path = "/data-s3/occmods/Hoverflies/occmod_outputs/2021_Francesca/", tax_grp = "Hoverflies", filetype = "rdata", chained = TRUE, min_iter = 2000)
-
-# saveRDS(hover_obs, "data/hover_obs.rds")
-
-lady_obs <- obs(tax_path = "/data-s3/occmods/Ladybirds/occmod_outputs/2021_Francesca/", tax_grp = "Ladybirds", filetype = "rdata", chained = TRUE, min_iter = 8000)
-
-# saveRDS(lady_obs, "data/lady_obs.rds")
-
-spider_obs <- obs(tax_path = "/data-s3/occmods/Spiders/occmod_outputs/2021_Francesca_marlog_rerun/", tax_grp = "Spiders", filetype = "rdata")
-
-# saveRDS(spider_obs, "data/spider_obs.rds")
-
-wasps_obs <- obs(tax_path = "/data-s3/occmods/Wasps/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Wasps", filetype = "rdata")
-
-# saveRDS(wasps_obs, "data/wasps_obs.rds")
-
-all_obs <- dplyr::bind_rows(ants_obs, bees_obs, ed_obs, hover_obs, lady_obs, spider_obs, wasps_obs)
-
-# saveRDS(all_obs, "data/all_obs.rds")
+# # function to convert first letter to uppercase
+# firstup <- function(x) {
+#   substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+#   x
+# }
+# 
+# # function to tidy observations used in models
+# # occ_pa and sites_gr needed
+# obs <- function(tax_path, tax_grp, filetype, chained = FALSE, min_iter) {
+#   
+#   spp <- dplyr::filter(occ_pa, tax_grp == !!tax_grp)$species %>% 
+#     unique(.) %>% 
+#     firstup(.)
+#   
+#   all_out <- lapply(spp, function(sp) {
+#     
+#     if(isTRUE(chained)) {
+#       
+#       out_meta <- load_rdata(paste0(tax_path, sp, "_", min_iter, "_1.rdata"))
+#       
+#     } else {
+#       
+#       if(filetype == "rds") {
+#         
+#         out_meta <- readRDS(paste0(tax_path, sp, ".rds"))
+#         
+#         }
+#     
+#       else if(filetype == "rdata") {
+#       
+#         out_meta <- load_rdata(paste0(tax_path, sp, ".rdata"))
+#       
+#       }
+#     }
+#     
+#     dat <- out_meta$model$data()
+#     
+#     dat_df <- data.frame(year = dat$Year, # year
+#                          rec = dat$y, # records
+#                          site = dat$Site) # sites
+# 
+#     # site number to grid ref look-up
+#     dat_site <- dat_df %>% 
+#       dplyr::distinct(site) %>% 
+#       dplyr::mutate(grid = unique(out_meta$sites_included[[1]]))
+#     
+#     region_site_pa <- dat[[paste0("r_", "pa")]][dat$Site]
+#     region_site_unp <- dat[[paste0("r_", "unp")]][dat$Site]
+#     
+#     # sites included within region
+#     dat_reg <- cbind(dat_df, region_site_pa, region_site_unp) %>% 
+#       dplyr::left_join(dat_site)
+#           
+#     # subset to temporal window
+#     dat_reg_pa <- dat_reg[dat_reg$region_site_pa == 1 & dat_reg$year >= (startyear - (out_meta$min_year - 1)) & dat_reg$year <= (endyear - (out_meta$min_year - 1)), ] %>% 
+#       dplyr::filter(rec == 1) %>% 
+#       dplyr::mutate(prot = "pa")
+#     
+#     dat_reg_unp <- dat_reg[dat_reg$region_site_unp == 1 & dat_reg$year >= (startyear - (out_meta$min_year - 1)) & dat_reg$year <= (endyear - (out_meta$min_year - 1)), ] %>% 
+#       dplyr::filter(rec == 1) %>% 
+#       dplyr::mutate(prot = "unp")
+#     
+#     dat_comb <- dplyr::bind_rows(dat_reg_pa, dat_reg_unp) %>% 
+#       dplyr::mutate(year = (year + 1970) - 1) %>% 
+#       dplyr::left_join(dplyr::select(sites_gr, -prot), by = c("grid" = "grid_ref")) %>% 
+#       dplyr::mutate(species = tolower(sp)) %>% 
+#       dplyr::mutate(tax_grp = tax_grp) %>% 
+#       dplyr::select(species, tax_grp, prot, grid, EASTING, NORTHING, year)
+#     
+#   }) %>% 
+#     dplyr::bind_rows()
+#   
+#   return(all_out)
+#   
+# }
+# 
+# ants_obs <- obs(tax_path = "/data-s3/occmods/Ants/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Ants", filetype = "rdata")
+# 
+# # saveRDS(ants_obs, "data/ants_obs.rds")
+# 
+# bees_obs <- obs(tax_path = "/data-s3/occmods/Bees/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Bees", filetype = "rdata")
+# 
+# # saveRDS(bees_obs, "data/bees_obs.rds")
+# 
+# hover_obs <- obs(tax_path = "/data-s3/occmods/Hoverflies/occmod_outputs/2021_Francesca/", tax_grp = "Hoverflies", filetype = "rdata", chained = TRUE, min_iter = 2000)
+# 
+# # saveRDS(hover_obs, "data/hover_obs.rds")
+# 
+# lady_obs <- obs(tax_path = "/data-s3/occmods/Ladybirds/occmod_outputs/2021_Francesca/", tax_grp = "Ladybirds", filetype = "rdata", chained = TRUE, min_iter = 8000)
+# 
+# # saveRDS(lady_obs, "data/lady_obs.rds")
+# 
+# spider_obs <- obs(tax_path = "/data-s3/occmods/Spiders/occmod_outputs/2021_Francesca_marlog_rerun/", tax_grp = "Spiders", filetype = "rdata")
+# 
+# # saveRDS(spider_obs, "data/spider_obs.rds")
+# 
+# wasps_obs <- obs(tax_path = "/data-s3/occmods/Wasps/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Wasps", filetype = "rdata")
+# 
+# # saveRDS(wasps_obs, "data/wasps_obs.rds")
+# 
+# all_obs <- dplyr::bind_rows(ants_obs, bees_obs, hover_obs, lady_obs, spider_obs, wasps_obs)
+# 
+# # saveRDS(all_obs, "data/all_obs.rds")
 
 all_obs <- readRDS("data/all_obs.rds")
 
@@ -1122,92 +968,79 @@ all_obs <- readRDS("data/all_obs.rds")
 
 ```{r}
 
-out_dat <- load_rdata(paste0("/data-s3/occmods/Ants/occmod_outputs/2021_Francesca_bwars_rerun/", "Formica exsecta", ".rdata"))
+# rhat <- function(tax_path, tax_grp, filetype, chained = FALSE, max_iter) {
+#   
+#   spp <- dplyr::filter(occ_pa, tax_grp == !!tax_grp)$species %>% 
+#     unique(.) %>% 
+#     firstup(.)
+#   
+#   bugs <- lapply(spp, function(sp) {
+#     
+#     if(isTRUE(chained)) {
+#       
+#       out_dat <- load_rdata(paste0(tax_path, sp, "_", max_iter, "_1.rdata"))
+#       
+#       if(!is.null(out_dat) & is.null(out_dat$model)) out_dat <- out_dat$out
+#       
+#     } else {
+#       
+#       if(filetype == "rds") {
+#         
+#         out_dat <- readRDS(paste0(tax_path, sp, ".rds"))
+#         
+#         }
+#     
+#       else if(filetype == "rdata") {
+#       
+#         out_dat <- load_rdata(paste0(tax_path, sp, ".rdata"))
+#       
+#       }
+#     }
+#     
+#     bugs <- out_dat$BUGSoutput$summary %>% 
+#       data.frame() %>% 
+#       tibble::rownames_to_column("para") %>% 
+#       dplyr::filter(stringr::str_detect(para, "psi.fs")) %>% 
+#       dplyr::filter(!stringr::str_detect(para, "psi.fs.r_ENGLAND|psi.fs.r_GB|psi.fs.r_NORTHERN_IRELAND|psi.fs.r_SCOTLAND|psi.fs.r_UK|psi.fs.r_WALES|psi.fs.r_high|psi.fs.r_low|psi.fs.r_no_agri|psi.fs.r_pa|psi.fs.r_unp")) %>% 
+#       dplyr::mutate(species = tolower(sp)) %>% 
+#       dplyr::mutate(tax_grp = tax_grp)
+#     
+#   }) %>% 
+#     dplyr::bind_rows()
+#   
+#   return(bugs)
+#   
+# }
+# 
+# ants_rhat <- rhat(tax_path = "/data-s3/occmods/Ants/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Ants", filetype = "rdata")
+# 
+# # saveRDS(ants_rhat, "data/ants_rhat.rds")
+# 
+# bees_rhat <- rhat(tax_path = "/data-s3/occmods/Bees/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Bees", filetype = "rdata")
+# 
+# # saveRDS(bees_rhat, "data/bees_rhat.rds")
+# 
+# hover_rhat <- rhat(tax_path = "/data-s3/occmods/Hoverflies/occmod_outputs/2021_Francesca/", tax_grp = "Hoverflies", filetype = "rdata", chained = TRUE, max_iter = 32000)
+# 
+# # saveRDS(hover_rhat, "data/hover_rhat.rds")
+# 
+# lady_rhat <- rhat(tax_path = "/data-s3/occmods/Ladybirds/occmod_outputs/2021_Francesca/", tax_grp = "Ladybirds", filetype = "rdata", chained = TRUE, max_iter = 32000)
+# 
+# # saveRDS(lady_rhat, "data/lady_rhat.rds")
+# 
+# spider_rhat <- rhat(tax_path = "/data-s3/occmods/Spiders/occmod_outputs/2021_Francesca_marlog_rerun/", tax_grp = "Spiders", filetype = "rdata")
+# 
+# # saveRDS(spider_rhat, "data/spider_rhat.rds")
+# 
+# wasps_rhat <- rhat(tax_path = "/data-s3/occmods/Wasps/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Wasps", filetype = "rdata")
+# 
+# # saveRDS(wasps_rhat, "data/wasps_rhat.rds")
+# 
+# all_rhat <- dplyr::bind_rows(ants_rhat, bees_rhat, hover_rhat, lady_rhat, spider_rhat, wasps_rhat)
+# 
+# # saveRDS(all_rhat, "data/all_rhat.rds")
 
-bugs <- out_dat$BUGSoutput$summary %>% 
-  data.frame() %>% 
-  tibble::rownames_to_column("para") %>% 
-  dplyr::filter(stringr::str_detect(para, "psi.fs")) %>% 
-  dplyr::filter(!stringr::str_detect(para, "psi.fs.r_ENGLAND|psi.fs.r_GB|psi.fs.r_SCOTLAND|psi.fs.r_UK|psi.fs.r_WALES|psi.fs.r_high|psi.fs.r_low|psi.fs.r_no_agri|psi.fs.r_pa|psi.fs.r_unp"))
-
-rhat <- function(tax_path, tax_grp, filetype, chained = FALSE, max_iter) {
-  
-  spp <- dplyr::filter(occ_pa, tax_grp == !!tax_grp)$species %>% 
-    unique(.) %>% 
-    firstup(.)
-  
-  bugs <- lapply(spp, function(sp) {
-    
-    if(isTRUE(chained)) {
-      
-      out_dat <- load_rdata(paste0(tax_path, sp, "_", max_iter, "_1.rdata"))
-      
-      if(!is.null(out_dat) & is.null(out_dat$model)) out_dat <- out_dat$out
-      
-    } else {
-      
-      if(filetype == "rds") {
-        
-        out_dat <- readRDS(paste0(tax_path, sp, ".rds"))
-        
-        }
-    
-      else if(filetype == "rdata") {
-      
-        out_dat <- load_rdata(paste0(tax_path, sp, ".rdata"))
-      
-      }
-    }
-    
-    bugs <- out_dat$BUGSoutput$summary %>% 
-      data.frame() %>% 
-      tibble::rownames_to_column("para") %>% 
-      dplyr::filter(stringr::str_detect(para, "psi.fs")) %>% 
-      dplyr::filter(!stringr::str_detect(para, "psi.fs.r_ENGLAND|psi.fs.r_GB|psi.fs.r_NORTHERN_IRELAND|psi.fs.r_SCOTLAND|psi.fs.r_UK|psi.fs.r_WALES|psi.fs.r_high|psi.fs.r_low|psi.fs.r_no_agri|psi.fs.r_pa|psi.fs.r_unp")) %>% 
-      dplyr::mutate(species = tolower(sp)) %>% 
-      dplyr::mutate(tax_grp = tax_grp)
-    
-  }) %>% 
-    dplyr::bind_rows()
-  
-  return(bugs)
-  
-}
-
-ants_rhat <- rhat(tax_path = "/data-s3/occmods/Ants/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Ants", filetype = "rdata")
-
-# saveRDS(ants_rhat, "data/ants_rhat.rds")
-
-bees_rhat <- rhat(tax_path = "/data-s3/occmods/Bees/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Bees", filetype = "rdata")
-
-# saveRDS(bees_rhat, "data/bees_rhat.rds")
-
-ed_rhat <- rhat(tax_path = "/data-s3/occmods/E&D/occmod_outputs/2021_Francesca/", tax_grp = "E&D", filetype = "rdata")
-
-# saveRDS(ed_rhat, "data/ed_rhat.rds")
-
-hover_rhat <- rhat(tax_path = "/data-s3/occmods/Hoverflies/occmod_outputs/2021_Francesca/", tax_grp = "Hoverflies", filetype = "rdata", chained = TRUE, max_iter = 32000)
-
-# saveRDS(hover_rhat, "data/hover_rhat.rds")
-
-lady_rhat <- rhat(tax_path = "/data-s3/occmods/Ladybirds/occmod_outputs/2021_Francesca/", tax_grp = "Ladybirds", filetype = "rdata", chained = TRUE, max_iter = 32000)
-
-# saveRDS(lady_rhat, "data/lady_rhat.rds")
-
-spider_rhat <- rhat(tax_path = "/data-s3/occmods/Spiders/occmod_outputs/2021_Francesca_marlog_rerun/", tax_grp = "Spiders", filetype = "rdata")
-
-# saveRDS(spider_rhat, "data/spider_rhat.rds")
-
-wasps_rhat <- rhat(tax_path = "/data-s3/occmods/Wasps/occmod_outputs/2021_Francesca_bwars_rerun/", tax_grp = "Wasps", filetype = "rdata")
-
-# saveRDS(wasps_rhat, "data/wasps_rhat.rds")
-
-all_rhat <- dplyr::bind_rows(ants_rhat, bees_rhat, ed_rhat, hover_rhat, lady_rhat, spider_rhat, wasps_rhat)
-
-# saveRDS(all_rhat, "data/all_rhat.rds")
-
-all_rhat <- readRDS("data/all_rhat.rds") %>% 
-  dplyr::filter(tax_grp %in% taxa)
+all_rhat <- readRDS("data/all_rhat.rds")
 
 # first and last rhats
 fl_rhat <- all_rhat %>% 
@@ -1274,9 +1107,6 @@ chng_over_conv <- est_plot_func(grp = "Overall", est_df = chng_comb_conv, est_di
 
 chng_comb_over_conv <- cowplot::plot_grid(msi_over_conv, chng_over_conv[[1]], nrow = 2, labels = "AUTO")
 
-# # save plot
-# cowplot::save_plot("outputs/chng_comb_over_conv.png", chng_comb_over_conv, base_height = 12, base_width = 9, dpi = 300)
-
 # beta_tbi_conv <- lapply(unique(occ_pa_conv$grp), function(xgrp) {
 # 
 #   out <- lapply(1:999, function(x) beta_tbi_func(grp = xgrp, it = x, occ_df_pa = occ_pa_conv, occ_df_unp = occ_unp_conv)) %>%
@@ -1324,8 +1154,7 @@ beta_over_plot_conv <- cowplot::plot_grid(NULL, beta_over_conv[[1]], NULL, nrow 
 conv_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_over_conv[[1]], NULL, labels = c("", "A", ""), rel_widths = c(0.4, 1, 0.4), ncol = 3), cowplot::plot_grid(msi_over_conv, chng_over_conv[[1]], labels = c("B", "C"), ncol = 2), beta_over_plot_conv, nrow = 3, rel_heights = c(1, 1, 2))
 
 # # save plot
-# cowplot::save_plot("outputs/conv.png", conv_plot, base_height = 12, base_width = 10, dpi = 600)
-
+# cowplot::save_plot("outputs/conv.png", conv_plot, base_height = 12, base_width = 10, dpi = 300)
 
 ```
 

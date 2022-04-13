@@ -1053,9 +1053,8 @@ conv_spp <- fl_rhat %>%
 
 ```
 
-# For temporal analyses
-
-# Only species with Rhat < 1.1 for first and last years
+# Species whose models converged
+# Rhat < 1.1 for first and last years
 
 ```{r}
 
@@ -1074,9 +1073,6 @@ spr_comb_conv <- dplyr::bind_rows(dplyr::select(spr_pa_conv, grp, iteration, pro
 spr_diff_out_conv <- sprich_diff(spr_df_pa = spr_pa_conv, spr_df_unp = spr_unp_conv)
 
 spr_over_conv <- est_plot_func(grp = "Overall", est_df = spr_comb_conv, est_diff = spr_diff_out_conv, vari = "spr", lim = c(-14, 14), axlab = "Species richness")
-
-# # save plots
-# cowplot::save_plot("outputs/sprich_over_conv.png", spr_over_conv[[1]], base_height = 6, base_width = 8, dpi = 300)
 
 msi_pa_conv <- msi(occ_df = occ_pa_conv)
 msi_unp_conv <- msi(occ_df = occ_unp_conv)
@@ -1146,15 +1142,342 @@ gain_over_conv <- est_plot_func(grp = "Overall", est_df = beta_tbi_conv, est_dif
 
 beta_over_plot_conv <- cowplot::plot_grid(NULL, beta_over_conv[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "A", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_over_conv[[1]], gain_over_conv[[1]], nrow = 1, labels = c("B", "C")), nrow = 2)
 
-# # save plot
-# cowplot::save_plot("outputs/beta_over_conv.png", beta_over_plot_conv, base_height = 8, base_width = 12, dpi = 300)
-
 beta_over_plot_conv <- cowplot::plot_grid(NULL, beta_over_conv[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "D", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_over_conv[[1]], gain_over_conv[[1]], nrow = 1, labels = c("E", "F")), nrow = 2)
 
 conv_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_over_conv[[1]], NULL, labels = c("", "A", ""), rel_widths = c(0.4, 1, 0.4), ncol = 3), cowplot::plot_grid(msi_over_conv, chng_over_conv[[1]], labels = c("B", "C"), ncol = 2), beta_over_plot_conv, nrow = 3, rel_heights = c(1, 1, 2))
 
 # # save plot
 # cowplot::save_plot("outputs/conv.png", conv_plot, base_height = 12, base_width = 10, dpi = 300)
+
+```
+
+# Spatiotemporal coverage
+
+```{r}
+
+# occAssess for protected areas project
+# Needs R >4.0.0
+
+# # install occAssess from github
+# devtools::install_github("https://github.com/robboyd/occAssess")
+library(occAssess)
+
+library(raster)
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+
+# adapted occAssess::assessSpatialCov to allow for base layers
+source('createData.R') # needed for adapted assessSpatialCov function
+source('assessSpatialCov_adapt.R')
+
+# set plotting theme
+ggplot2::theme_set(cowplot::theme_cowplot())
+
+rasterOptions(tmpdir = "temp")
+
+all_obs <- readRDS("data/occ_assess/all_obs.rds") %>% 
+  dplyr::mutate(spatialUncertainty = NA,
+                identifier = "Overall") %>% 
+  dplyr::filter(!tax_grp == "E&D")
+
+sites_gr <- readRDS("occ_assess/sites_gr.rds")
+
+pa_rast <- raster::rasterFromXYZ(dplyr::filter(sites_gr, prot == "pa") %>% dplyr::mutate(z = 1) %>% dplyr::select(x = EASTING, y = NORTHING, z))
+
+unp_rast <- raster::rasterFromXYZ(dplyr::filter(sites_gr, prot == "unp") %>% dplyr::mutate(z = 1) %>% dplyr::select(x = EASTING, y = NORTHING, z))
+
+periods <- as.list(1990:2018)
+# periods_4 <- list(1990:1994, 1995:1998, 1999:2002, 2003:2006, 2007:2010, 2011:2014, 2015:2018)
+periods_7 <- list(1990:1997, 1998:2004, 2005:2011, 2012:2018)
+
+period_names <- as.character(periods_7)
+
+# function to relabel facets
+period_labeller <- function(variable,value){
+  return(period_names[value])
+}
+
+colrs <- viridis::viridis(20)
+
+colrs_nam <- c("1" = colrs[1], "2" = colrs[2], "3" = colrs[3], "4" = colrs[4], "5" = colrs[5], "6" = colrs[6], "7" = colrs[7], "8" = colrs[8], "9" = colrs[9], "10" = colrs[10], "11" = colrs[11], "12" = colrs[12], "13" = colrs[13], "14" = colrs[14], "15" = colrs[15], "16" = colrs[16], "17" = colrs[17], "18" = colrs[18], "19" = colrs[19], "20" = colrs[20], "21" = colrs[21], "22" = colrs[22], "23" = colrs[23], "24" = colrs[24], "25" = colrs[25], "26" = colrs[26], "27" = colrs[27], "28" = colrs[28])
+
+# taxonomic groups
+
+## Spatiotemporal coverage ##
+
+# protected
+maps_pers_tax_pa <- assessSpatialCov_adapt(dat = dplyr::filter(all_obs, prot == "pa"), periods = periods, res = 1000, logCount = TRUE, species = "species", x = "EASTING", y = "NORTHING", year = "year", spatialUncertainty = "spatialUncertainty", identifier = "tax_grp", output = "nPeriods", sites_gr = sites_gr, pa = TRUE)
+
+maps_pers_tax_pa_func <- function(x, leg = FALSE) {
+  
+  maps_out <- maps_pers_tax_pa[[x]] +
+    coord_equal() +
+    # add maximum repeated value
+    geom_text(x = 550000, y = 600000, label = max(maps_pers_tax_pa[[x]]$data$value, na.rm = TRUE), size = 3) +
+    # change colour scheme
+    ggplot2::scale_fill_manual(values = colrs_nam[2:max(maps_pers_tax_pa[[x]]$data$value, na.rm = TRUE)], na.value = "white", na.translate = FALSE, name = "Number of years sampled", drop = FALSE) +
+    # edit theme
+    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+  # legend
+  if(leg == FALSE) {maps_out <- maps_out + 
+    theme(legend.position = "none")}
+  
+  return(maps_out)
+   
+}
+
+maps_pers_tax_pa_out <- lapply(1:length(maps_pers_tax_pa), maps_pers_tax_pa_func)
+
+# unprotected
+maps_pers_tax_unp <- assessSpatialCov_adapt(dat = dplyr::filter(all_obs, prot == "unp"), periods = periods, res = 1000, logCount = TRUE, species = "species", x = "EASTING", y = "NORTHING", year = "year", spatialUncertainty = "spatialUncertainty", identifier = "tax_grp", output = "nPeriods", sites_gr = sites_gr, pa = FALSE)
+
+maps_pers_tax_unp_func <- function(x, leg = FALSE) {
+  
+  maps_out <- maps_pers_tax_unp[[x]] +
+    coord_equal() +
+    # add maximum repeated value
+    geom_text(x = 550000, y = 600000, label = max(maps_pers_tax_unp[[x]]$data$value, na.rm = TRUE), size = 3) +
+    # change colour scheme
+    ggplot2::scale_fill_manual(values = colrs_nam[2:max(maps_pers_tax_unp[[x]]$data$value, na.rm = TRUE)], na.value = "white", na.translate = FALSE, name = "Number of years sampled", drop = FALSE) +
+    # edit theme
+    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+  # legend
+  if(leg == FALSE) {maps_out <- maps_out + 
+    theme(legend.position = "none")}
+  
+  return(maps_out)
+  
+}
+
+maps_pers_tax_unp_out <- lapply(1:length(maps_pers_tax_unp), maps_pers_tax_unp_func)
+
+# combine
+maps_pers_tax_comb <- cowplot::plot_grid(cowplot::plot_grid(maps_pers_tax_pa_out[[1]], maps_pers_tax_unp_out[[1]]), cowplot::plot_grid(maps_pers_tax_pa_out[[2]], maps_pers_tax_unp_out[[2]]), cowplot::plot_grid(maps_pers_tax_pa_out[[3]], maps_pers_tax_unp_out[[3]]), cowplot::plot_grid(maps_pers_tax_pa_out[[4]], maps_pers_tax_unp_out[[4]]), cowplot::plot_grid(maps_pers_tax_pa_out[[5]], maps_pers_tax_unp_out[[5]]), cowplot::plot_grid(maps_pers_tax_pa_out[[6]], maps_pers_tax_unp_out[[6]]), ncol = 2)
+
+# cowplot::save_plot("occ_assess/maps_pers_tax.png", maps_pers_tax_comb, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
+
+# generate legend
+maps_pers_leg <- cowplot::get_legend(maps_pers_tax_pa_func(3) + scale_fill_manual(values = colrs_nam[2:max(maps_pers_tax_pa[[3]]$data$value, na.rm = TRUE)], na.value = "white", name = "Number of\nyears sampled", drop = FALSE) + theme(legend.position = "bottom", legend.direction = "horizontal"))
+
+# add legend to plot
+maps_pers_tax_comb_leg <- cowplot::plot_grid(maps_pers_tax_comb, cowplot::plot_grid(NULL, maps_pers_leg, NULL, ncol = 3), ncol = 1, rel_heights = c(3, 0.5))
+
+maps_pers_tax_comb_leg2 <- ggdraw(maps_pers_tax_comb_leg) +
+  theme(plot.background = element_rect(fill = "white", color = NA))
+
+# cowplot::save_plot("occ_assess/maps_pers_tax.png", maps_pers_tax_comb_leg, base_height = 12, base_aspect_ratio = 0.7, dpi = 600)
+
+## Spatial coverage ##
+
+# protected
+maps_tax_pa <- assessSpatialCov_adapt(dat = dplyr::filter(all_obs, prot == "pa"), periods = periods_7, res = 1000, logCount = TRUE, species = "species", x = "EASTING", y = "NORTHING", year = "year", spatialUncertainty = "spatialUncertainty", identifier = "tax_grp", output = "density", sites_gr = sites_gr, pa = TRUE)
+
+trans_col <- rgb(255,255,255, max = 255, alpha = 0)
+
+maps_tax_pa_func <- function(x, leg = TRUE) {
+  
+  maps_out <- maps_tax_pa[[x]] +
+    # change period names
+    facet_wrap(. ~ variable, labeller = period_labeller) +
+    # change fill colour
+    ggplot2::scale_fill_gradient2(low = "#d9d9d9", high = "#000000", na.value = trans_col, name = expression("log"[10]*"(n records)")) +
+    # edit theme
+    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+  # legend
+  if(leg == FALSE) {maps_out <- maps_out + 
+    theme(legend.position = "none")}
+  
+  return(maps_out)
+  
+}
+
+maps_tax_pa_out <- lapply(1:length(maps_tax_pa), maps_tax_pa_func)
+
+# unprotected
+maps_tax_unp <- assessSpatialCov_adapt(dat = dplyr::filter(all_obs, prot == "unp"), periods = periods_7, res = 1000, logCount = TRUE, species = "species", x = "EASTING", y = "NORTHING", year = "year", spatialUncertainty = "spatialUncertainty", identifier = "tax_grp", output = "density", sites_gr = sites_gr, pa = FALSE)
+
+maps_tax_unp_func <- function(x, leg = TRUE) {
+  
+  maps_out <- maps_tax_unp[[x]] +
+    # change period names
+    facet_wrap(. ~ variable, labeller = period_labeller) +
+    # change fill colour
+    ggplot2::scale_fill_gradient2(low = "#d9d9d9", high = "#000000", na.value = trans_col, name = expression("log"[10]*"(n records)")) +
+    # edit theme
+    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+  # legend
+  if(leg == FALSE) {maps_out <- maps_out + 
+    theme(legend.position = "none")}
+  
+  return(maps_out)
+  
+}
+
+maps_tax_unp_out <- lapply(1:length(maps_tax_unp), maps_tax_unp_func)
+
+# combine
+
+# ants, bees
+maps_ab <- cowplot::plot_grid(maps_tax_pa_out[[1]] + labs(title = "Ants"), maps_tax_unp_out[[1]] + labs(title = "Ants"), maps_tax_pa_out[[2]] + labs(title = "Bees"), maps_tax_unp_out[[2]] + labs(title = "Bees"), ncol = 2)
+
+cowplot::save_plot("occ_assess/maps_ab.png", maps_ab, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
+
+# hoverflies, ladybirds
+maps_hl <- cowplot::plot_grid(maps_tax_pa_out[[3]] + labs(title = "Hoverflies"), maps_tax_unp_out[[3]] + labs(title = "Hoverflies"), maps_tax_pa_out[[4]] + labs(title = "Ladybirds"), maps_tax_unp_out[[4]] + labs(title = "Ladybirds"), ncol = 2)
+
+cowplot::save_plot("occ_assess/maps_hl.png", maps_hl, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
+
+# spiders, wasps
+maps_sw <- cowplot::plot_grid(maps_tax_pa_out[[5]] + labs(title = "Spiders"), maps_tax_unp_out[[5]] + labs(title = "Spiders"), maps_tax_pa_out[[6]] + labs(title = "Wasps"), maps_tax_unp_out[[6]] + labs(title = "Wasps"), ncol = 2)
+
+cowplot::save_plot("occ_assess/maps_sw.png", maps_sw, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
+
+## Spatial bias ##
+
+spat_tax_func <- function(tax) {
+  
+  spatBias_tax_pa <- occAssess::assessSpatialBias(dat = dplyr::filter(all_obs, prot == "pa" & tax_grp == !!tax), periods = periods, mask = pa_rast, nSamps = 100, degrade = TRUE, species = "species", x = "EASTING", y = "NORTHING", year = "year", spatialUncertainty = "spatialUncertainty", identifier = "prot")
+  
+  spatBias_tax_unp <- occAssess::assessSpatialBias(dat = dplyr::filter(all_obs, prot == "unp" & tax_grp == !!tax), periods = periods, mask = pa_rast, nSamps = 100, degrade = TRUE, species = "species", x = "EASTING", y = "NORTHING", year = "year", spatialUncertainty = "spatialUncertainty", identifier = "prot")
+  
+  spat_dat_tax <- dplyr::bind_rows(spatBias_tax_pa$data, spatBias_tax_unp$data) %>%
+    # convert period to year
+    dplyr::mutate(year = as.numeric(Period) + 1989) %>% 
+    dplyr::mutate(identifier = dplyr::recode(identifier, pa = "Protected", unp = "Unprotected"))
+  
+  spatBias_tax_out <- ggplot(data = spat_dat_tax, aes(x = year, y = mean, ymin = lower, ymax = upper, colour = identifier, fill = identifier)) + 
+    geom_hline(yintercept = 1, colour = "grey", lty = 2) +
+    geom_line() + 
+    geom_point() + 
+    geom_ribbon(alpha = 0.5) + 
+    # mean value across years
+    geom_text(x = 1992, y = 1.3, label = sprintf("%.2f", signif(mean(dplyr::filter(spat_dat_tax, identifier == "Protected")$mean), digits = 2)), colour = "#0077BB", size = 3) +
+    geom_text(x = 1992, y = 1.1, label = sprintf("%.2f", signif(mean(dplyr::filter(spat_dat_tax, identifier == "Unprotected")$mean), digits = 2)), colour = "#EE7733", size = 3) +
+    theme_linedraw() + 
+    scale_colour_manual(values = c("#0077BB", "#EE7733")) +
+    scale_fill_manual(values = c("#0077BB", "#EE7733")) +
+    labs(title = tax, x = "Year", y = "Nearest neighbour index", colour = "", fill = "") +
+    ylim(c(0, 1.4))
+  
+  return(spatBias_tax_out)
+  
+}
+
+# runs ~1 hour
+spatBias_tax <- lapply(unique(all_obs$tax_grp), spat_tax_func)
+
+spatBias_tax_leg <- cowplot::get_legend(spatBias_tax[[1]] +theme(legend.position = "bottom"))
+
+spatBias_tax_comb <- cowplot::plot_grid(spatBias_tax[[1]] + theme(legend.position = "none"), spatBias_tax[[2]] + theme(legend.position = "none") + labs(y = ""), spatBias_tax[[3]] + theme(legend.position = "none"), spatBias_tax[[4]] + theme(legend.position = "none") + labs(y = ""), spatBias_tax[[5]] + theme(legend.position = "none"), spatBias_tax[[6]] + theme(legend.position = "none") + labs(y = ""), ncol = 2)
+
+spatBias_tax_comb_leg <- cowplot::plot_grid(spatBias_tax_comb, spatBias_tax_leg, ncol = 1, rel_heights = c(3, 0.3))
+
+spatBias_tax_comb2 <- ggdraw(spatBias_tax_comb_leg) +
+  theme(plot.background = element_rect(fill = "white", color = NA))
+
+cowplot::save_plot("occ_assess/spat_bias_tax.png", spatBias_tax_comb2, base_height = 8, base_aspect_ratio = 1, dpi = 600)
+
+# number of records
+# IS THIS USEFUL? ASK ROB B
+
+nRec <- occAssess::assessRecordNumber(dat = all_obs,
+                                      periods = periods,
+                                      species = "species",
+                                      x = "EASTING",
+                                      y = "NORTHING",
+                                      year = "year", 
+                                      spatialUncertainty = "spatialUncertainty",
+                                      identifier = "prot",
+                                      normalize = FALSE)
+
+
+## repeat visits ##
+
+perd <- data.frame(year = 1990:2018, perd_7 = c(rep("1990:1997", 8), rep("1998:2004", 7), rep("2005:2011", 7), rep("2012:2018", 7)))
+
+rep_vis <- all_obs %>% 
+  dplyr::count(tax_grp, prot, grid, EASTING, NORTHING, year) %>% 
+  # repeat visits (i.e., two visits to same site in same year)
+  dplyr::filter(n >= 2) %>% 
+  dplyr::left_join(perd, by = "year")
+
+rep_plot <- function(tax, pa = NULL) {
+  
+  # subset data for taxonomic group
+  dat <- rep_vis %>% 
+    dplyr::filter(tax_grp == !!tax)
+  
+  if(pa == TRUE) {
+    
+    dat <- dplyr::filter(dat, prot == "pa")
+    
+  }
+  
+  if(pa == FALSE) {
+    
+    dat <- dplyr::filter(dat, prot == "unp")
+    
+  }
+  
+  # plot
+  p <- ggplot2::ggplot(data = dat, aes(x = EASTING, y = NORTHING)) +
+  # add GB
+  geom_tile(data = sites_gr, aes(x = EASTING, y = NORTHING), fill = "grey", colour = "grey", lwd = 0, alpha = 0.4)
+  
+  if(pa == TRUE) {
+    
+    p <- p + 
+    # add protected areas
+  geom_tile(data = dplyr::filter(sites_gr, prot == "pa"), aes(x = EASTING, y = NORTHING), alpha = 0.5, fill = "#0077BB", colour = "#0077BB", lwd = 0)
+    
+  }
+  
+  if(pa == FALSE) {
+    
+    p <- p + 
+      # add unprotected areas
+      geom_tile(data = dplyr::filter(sites_gr, prot == "unp"), aes(x = EASTING, y = NORTHING), alpha = 0.5, fill = "#EE7733", colour = "#EE7733", lwd = 0)
+    
+  }
+  
+  p <- p +
+    # grid cells with repeat visits
+    geom_tile(fill = "black") +
+    coord_equal() +
+    labs(title = tax) +
+    # split into periods
+    facet_wrap(~ perd_7) +
+    theme_linedraw() +
+    # edit theme
+    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+}
+
+rep_maps_pa <- lapply(unique(rep_vis$tax_grp), function(x) {rep_plot(tax = x, pa = TRUE)})
+
+rep_maps_unp <- lapply(unique(rep_vis$tax_grp), function(x) {rep_plot(tax = x, pa = FALSE)})
+
+# combine
+
+# ants, bees
+rep_ab <- cowplot::plot_grid(rep_maps_pa[[1]], rep_maps_unp[[1]], rep_maps_pa[[2]], rep_maps_unp[[2]], ncol = 2)
+
+cowplot::save_plot("occ_assess/rep_ab.png", rep_ab, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
+
+# hoverflies, ladybirds
+rep_hl <- cowplot::plot_grid(rep_maps_pa[[3]], rep_maps_unp[[3]], rep_maps_pa[[4]], rep_maps_unp[[4]], ncol = 2)
+
+cowplot::save_plot("occ_assess/rep_hl.png", rep_hl, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
+
+# spiders, wasps
+rep_sw <- cowplot::plot_grid(rep_maps_pa[[5]], rep_maps_unp[[5]], rep_maps_pa[[6]], rep_maps_unp[[6]], ncol = 2)
+
+cowplot::save_plot("occ_assess/rep_sw.png", rep_sw, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
 
 ```
 

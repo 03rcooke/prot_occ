@@ -1,0 +1,33 @@
+Package: picante
+Type: Package
+Title: Integrating Phylogenies and Ecology
+Version: 1.8.2
+Date: 2020-06-08
+Author: Steven W. Kembel <steve.kembel@gmail.com>, David D. Ackerly
+    <dackerly@berkeley.edu>, Simon P. Blomberg <s.blomberg1@uq.edu.au>,
+    Will K. Cornwell <cornwell@zoology.ubc.ca>, Peter D. Cowan
+    <pdc@berkeley.edu>, Matthew R. Helmus <mrhelmus@wisc.edu>, Helene
+    Morlon <morlon.helene@gmail.com>, Campbell O. Webb
+    <cwebb@oeb.harvard.edu>
+Maintainer: Steven W. Kembel <steve.kembel@gmail.com>
+Depends: ape, vegan, nlme, methods
+Suggests: brglm, circular, corpcor, quantreg
+Description: Functions for phylocom integration, community analyses,
+    null-models, traits and evolution. Implements numerous
+    ecophylogenetic approaches including measures of community
+    phylogenetic and trait diversity, phylogenetic signal, estimation
+    of trait values for unobserved taxa, null models for community and
+    phylogeny randomizations, and utility functions for data
+    input/output and phylogeny plotting. A full description of package
+    functionality and methods are provided by Kembel et al. (2010)
+    <doi:10.1093/bioinformatics/btq166>.
+License: GPL-2
+NeedsCompilation: yes
+Packaged: 2020-06-10 14:53:27 UTC; steve
+Repository: RSPM
+Date/Publication: 2020-06-10 15:20:06 UTC
+Encoding: UTF-8
+Built: R 4.0.0; x86_64-pc-linux-gnu; 2020-06-12 10:50:54 UTC; unix
+InstallAgent: packrat 0.6.0
+InstallSource: RSPM
+Hash: 7464ddf59fb79ce8eb4c2298f55be71b

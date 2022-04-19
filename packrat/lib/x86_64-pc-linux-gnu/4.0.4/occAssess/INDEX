@@ -1,0 +1,18 @@
+UKWGS84mask             Example mask layer for assessSpatialBias(). .
+assessEnvBias           'assessEnvBias'
+assessRarityBias        'assessRarityBias'
+assessRecordNumber      'assessRecordNumber'
+assessRepeatVisits      'assessRepeatVisits'
+assessSpatialBias       'assessSpatialBias'
+assessSpatialCov        'assessSpatialCov'
+assessSpatialUncertainty
+                        'assessSpatialUncertainty'
+assessSpeciesID         'assessSpeciesID'
+assessSpeciesNumber     'assessSpeciesNumber'
+backgroundEnvDat        Background environmental data for the UK
+random40Species         Simulated occurrence data.
+random40SpeciesEnvDat   Background environmental data at the locations
+                        of the simulated data random40Species.
+simDat                  Simulated occurrence data.
+simEnvDat               Environmental data at the locations of the
+                        simulated data simDat.

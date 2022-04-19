@@ -1,0 +1,48 @@
+bbsData                 BBS data by state for two timeslices
+beta.multi              Multiple-site dissimilarities
+beta.multi.abund        Abundance-based multiple-site dissimilarities
+beta.pair               Incidence-based pair-wise dissimilarities
+beta.pair.abund         Abundance-based pair-wise dissimilarities
+beta.para.control       Specifying Control Values for Internal Parallel
+                        Cluster
+beta.sample             Resampling multiple-site dissimilarity for n
+                        sites
+beta.sample.abund       Resampling abundance-based multiple-site
+                        dissimilarity for n sites
+beta.temp               Temporal change in community composition
+betapart                Partitioning beta diversity into turnover and
+                        nestedness components
+betapart.core           Core calculations of betapart
+betapart.core.abund     Core calculations of betapart for
+                        abundance-based dissimilarity measures
+betatest                A data set of 4 communities, 107 species and a
+                        4D functional space
+boot.coefs.decay        Bootstrapping the parameters of distance-decay
+                        models computed with decay.model()
+bray.part               Partitioning pair-wise Bray-Curtis
+                        dissimilarities
+ceram.n                 Cerambycidae from Northern European Countries
+ceram.s                 Cerambycidae from Southern European Countries
+decay.model             Fitting distance decay models to pair-wise
+                        assemblage similarity
+functional.beta.multi   Multiple-site functional dissimilarities
+functional.beta.pair    Pair-wise functional dissimilarities
+functional.betapart.core
+                        Core calculations of functional dissimilarities
+                        metrics
+functional.betapart.core.pairwise
+                        functional.betapart.core.pairwise
+inter_geom              Internal function to compute convexhull volume
+inter_geom_coord        Internal function to compute convexhull volume
+                        and vertice coordinates
+inter_rcdd              Internal function to compute convexhull volume
+inter_rcdd_coord        Internal function to compute convexhull volume
+                        and vertice coordinates
+phylo.beta.multi        Multiple-site phylogenetic dissimilarities
+phylo.beta.pair         Pair-wise phylogenetic dissimilarities
+phylo.betapart.core     Core calculations of phylogenetic
+                        dissimilarities metrics
+plot.decay              Plotting distance decay curves from models
+                        computed with decay.model()
+qhull.opt               Specifying control Values for convexhull volume
+                        estimation

@@ -1,0 +1,22 @@
+Package: HDInterval
+Type: Package
+Title: Highest (Posterior) Density Intervals
+Version: 0.2.2
+Date: 2020-05-18
+Suggests: coda
+Author: Mike Meredith and John Kruschke
+Maintainer: Mike Meredith <mike@mmeredith.net>
+Description: A generic function and a set of methods to calculate
+    highest density intervals for a variety of classes of objects which
+    can specify a probability density distribution, including MCMC
+    output, fitted density objects, and functions.
+License: GPL-3
+NeedsCompilation: no
+Packaged: 2020-05-23 01:29:48 UTC; User
+Repository: RSPM
+Date/Publication: 2020-05-23 06:50:02 UTC
+Encoding: UTF-8
+Built: R 4.0.3; ; 2021-02-11 22:12:04 UTC; unix
+InstallAgent: packrat 0.6.0
+InstallSource: RSPM
+Hash: abfef5435e937a9132df7289d27fd647

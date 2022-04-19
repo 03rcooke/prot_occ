@@ -1,0 +1,27 @@
+Package: wrappeR
+Type: Package
+Title: A Pipeline for Biodiversity Indicators
+Version: 0.2.4
+Date: 2021-05-21
+Author: Rob Boyd, Rob Cooke, Tom August, Gary Powney, Mark Logie,
+    Francesca Mancini, Nick Isaac
+Maintainer: Rob Boyd <robboy@ceh.ac.uk>, Rob Cooke <roboke@ceh.ac.uk>
+Description: Wrapper around three packages: TrendSummaries,
+    BRCindicators and sparta. Includes high level functions to flexibly
+    and easily produce occupancy indicators.
+Depends: R (>= 3.1.0)
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+Imports: dplyr, pbapply, stringr
+Suggests: knitr, rmarkdown, testthat, covr
+VignetteBuilder: knitr
+GithubRepo: wrappeR
+GithubUsername: BiologicalRecordsCentre
+GithubRef: main
+GithubSHA1: 26dbb5a4d9dcbba1702865442e7c2e9c7721b61b
+Built: R 4.0.4; ; 2022-04-19 10:13:45 UTC; unix
+InstallAgent: packrat 0.6.0
+InstallSource: github
+Hash: 764527e5846df5eaca247c5f844c2534

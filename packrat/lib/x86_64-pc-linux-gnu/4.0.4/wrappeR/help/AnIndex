@@ -1,0 +1,15 @@
+applyClipping	applyClipping
+applyFilters	applyFilters
+applySamp	applySamp
+calcMSI	calcMSI
+combineSamps	combineSamps
+createMetadata	createMetadata
+createRoster	createRoster
+getA	getA
+loadRData	loadRData
+speciesInfo	speciesInfo
+summariseMSI	summariseMSI
+tempSampPost	tempSampPost
+tempStackFilter	tempStackFilter
+testFilterDat	testFilterDat
+testRoster	testRoster

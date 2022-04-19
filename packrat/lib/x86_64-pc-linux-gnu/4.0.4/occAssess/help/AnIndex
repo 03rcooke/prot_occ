@@ -1,0 +1,15 @@
+assessEnvBias	assessEnvBias
+assessRarityBias	assessRarityBias
+assessRecordNumber	assessRecordNumber
+assessRepeatVisits	assessRepeatVisits
+assessSpatialBias	assessSpatialBias
+assessSpatialCov	assessSpatialCov
+assessSpatialUncertainty	assessSpatialUncertainty
+assessSpeciesID	assessSpeciesID
+assessSpeciesNumber	assessSpeciesNumber
+backgroundEnvDat	backgroundEnvDat
+random40Species	random40Species
+random40SpeciesEnvDat	random40SpeciesEnvDat
+simDat	simDat
+simEnvDat	simEnvDat
+UKWGS84mask	UKWGS84mask

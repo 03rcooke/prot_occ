@@ -1,0 +1,26 @@
+applyClipping           'applyClipping' - Apply filters to occupancy
+                        model outputs.
+applyFilters            'applyFilters' - Apply filters to occupancy
+                        model outputs.
+applySamp               'applySamp' - Reads a series of occupancy model
+                        and summarises the outputs
+calcMSI                 'calcMSI' - Calculate multispecies indicator.
+combineSamps            'combineSamps' - function inside
+                        'tempSampPost', see 'tempSampPost' and
+                        'applySamp' for details
+createMetadata          'createMetadata' - Create master metadata table
+                        from objectstore data repository
+createRoster            'createRoster' - Specify how to filter the
+                        occupancy model outputs.
+getA                    'getA' - Extracts the "a" parameter from
+                        occupancy model outputs.
+loadRData               'loadRFile' - function to deal with different
+                        file formats
+speciesInfo             speciesInfo
+summariseMSI            'summariseMSI' - Summarise the multispecies
+                        indicator for reporting to e.g. JNCC.
+tempSampPost            'tempSampPost' - from TrendSummaries, edited
+tempStackFilter         'tempStackFilter' - Version of StackFilter from
+                        TrendSummaries, edited
+testFilterDat           Example applyFilters output
+testRoster              Example roster output

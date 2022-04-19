@@ -1,0 +1,15 @@
+GeomHalfBoxplot	gghalves-extensions
+GeomHalfDotplot	gghalves-extensions
+GeomHalfPoint	gghalves-extensions
+GeomHalfPointPanel	gghalves-extensions
+GeomHalfViolin	gghalves-extensions
+geom_half_boxplot	geom_half_boxplot
+geom_half_dotplot	geom_half_dotplot
+geom_half_point	geom_half_point
+geom_half_point_panel	geom_half_point_panel
+geom_half_violin	geom_half_violin
+gghalves-extensions	gghalves-extensions
+StatHalfBindot	gghalves-extensions
+StatHalfPoint	gghalves-extensions
+StatHalfYdensity	gghalves-extensions
+stat_half_ydensity	geom_half_violin

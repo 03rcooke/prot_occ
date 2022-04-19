@@ -1,0 +1,10 @@
+GeomHalfDotplot         gghalves extensions to ggplot2
+geom_half_boxplot       A half boxplot
+geom_half_dotplot       Half dot plot with sensible parameter settings.
+geom_half_point         Points with jitter for half geoms.
+geom_half_point_panel   Points with jitter for half geoms. Unlike
+                        'geom_half_point', 'geom_half_point_panel' does
+                        not dodge different grouping aesthetics. This
+                        allows multiple groups in a single cloud of
+                        points (see examples).
+geom_half_violin        Half Violin plot

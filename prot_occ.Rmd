@@ -49,6 +49,10 @@ library(gghalves)
 # devtools::install_github("https://github.com/robboyd/occAssess")
 library(occAssess)
 
+# # install igraph from github
+# # problems with CRAN version similar to this https://github.com/igraph/rigraph/issues/335
+# remotes::install_github("igraph/rigraph@master")
+
 # # commit packages to packrat library
 # packrat::snapshot()
 # packrat::status()

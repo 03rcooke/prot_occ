@@ -45,6 +45,10 @@ library(wrappeR) # wrappeR: multi-species indicators
 # remotes::install_github('erocoar/gghalves')
 library(gghalves)
 
+# # install occAssess from github
+# devtools::install_github("https://github.com/robboyd/occAssess")
+library(occAssess)
+
 # # commit packages to packrat library
 # packrat::snapshot()
 # packrat::status()
@@ -53,11 +57,15 @@ library(gghalves)
 rasterOptions(tmpdir = "temp")
 
 # source pa_pr function
-source("pa_pr_fun.R")
+source("functions/pa_pr_fun.R")
 # source beta_tbi_func function
-source("beta_tbi_func.R")
+source("functions/beta_tbi_func.R")
 # source est_plot_func function
-source("est_plot_func.R")
+source("functions/est_plot_func.R")
+
+# adapted occAssess::assessSpatialCov to allow for base layers
+source("functions/createData.R") # needed for adapted assessSpatialCov function
+source("functions/assessSpatialCov_adapt.R")
 
 # load_rdata function
 # loads an RData file, and assigns it to an object name
@@ -1155,31 +1163,9 @@ conv_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_over_conv[[1]], NUL
 
 ```{r}
 
-# occAssess for protected areas project
-# Needs R >4.0.0
-
-# # install occAssess from github
-# devtools::install_github("https://github.com/robboyd/occAssess")
-library(occAssess)
-
-library(raster)
-library(ggplot2)
-library(cowplot)
-library(dplyr)
-
-# adapted occAssess::assessSpatialCov to allow for base layers
-source('createData.R') # needed for adapted assessSpatialCov function
-source('assessSpatialCov_adapt.R')
-
-# set plotting theme
-ggplot2::theme_set(cowplot::theme_cowplot())
-
-rasterOptions(tmpdir = "temp")
-
 all_obs <- readRDS("data/occ_assess/all_obs.rds") %>% 
   dplyr::mutate(spatialUncertainty = NA,
-                identifier = "Overall") %>% 
-  dplyr::filter(!tax_grp == "E&D")
+                identifier = "Overall")
 
 sites_gr <- readRDS("occ_assess/sites_gr.rds")
 
@@ -1381,20 +1367,6 @@ spatBias_tax_comb2 <- ggdraw(spatBias_tax_comb_leg) +
   theme(plot.background = element_rect(fill = "white", color = NA))
 
 cowplot::save_plot("occ_assess/spat_bias_tax.png", spatBias_tax_comb2, base_height = 8, base_aspect_ratio = 1, dpi = 600)
-
-# number of records
-# IS THIS USEFUL? ASK ROB B
-
-nRec <- occAssess::assessRecordNumber(dat = all_obs,
-                                      periods = periods,
-                                      species = "species",
-                                      x = "EASTING",
-                                      y = "NORTHING",
-                                      year = "year", 
-                                      spatialUncertainty = "spatialUncertainty",
-                                      identifier = "prot",
-                                      normalize = FALSE)
-
 
 ## repeat visits ##
 

@@ -36,5 +36,5 @@ Repository: RSPM
 Date/Publication: 2021-05-05 19:00:02 UTC
 Built: R 4.0.4; ; 2021-05-06 10:51:29 UTC; unix
 InstallAgent: packrat 0.6.0
-InstallSource: CRAN
+InstallSource: RSPM
 Hash: 7f927a4b80e762b0c31c8c89e00eb070

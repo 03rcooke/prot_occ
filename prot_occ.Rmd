@@ -57,15 +57,10 @@ library(occAssess)
 # packrat::snapshot()
 # packrat::status()
 
-# set location of temporary directory for raster package
-rasterOptions(tmpdir = "temp")
-
-# source pa_pr function
-source("functions/pa_pr_fun.R")
-# source beta_tbi_func function
-source("functions/beta_tbi_func.R")
-# source est_plot_func function
-source("functions/est_plot_func.R")
+# source functions
+source("functions/pa_pr_fun.R") # source pa_pr function
+source("functions/beta_tbi_func.R") # source beta_tbi_func function
+source("functions/est_plot_func.R") # source est_plot_func function
 
 # adapted occAssess::assessSpatialCov to allow for base layers
 source("functions/createData.R") # needed for adapted assessSpatialCov function
@@ -77,6 +72,12 @@ load_rdata <- function(fileName) {
   load(fileName)
   get(ls()[ls() != "fileName"])
 }
+
+# set location of temporary directory for raster package
+rasterOptions(tmpdir = "temp")
+
+# set plotting theme
+ggplot2::theme_set(cowplot::theme_cowplot())
 
 # global parameters
 startyear <- 1990
@@ -346,7 +347,7 @@ GB_func_spp <- occ_pa %>%
   dplyr::count(grp)
 
 # tidy up
-rm(hov_pa, hov_unp, occ_pa_func, occ_pa_prep, occ_unp_func, occ_unp_prep); gc()
+rm(hov_pa, hov_unp, occ_pa_func, occ_pa_prep, occ_unp_func, occ_unp_prep)
 
 ```
 
@@ -373,6 +374,7 @@ sprich <- function(occ_df) {
   
 }
 
+# calculate species richness per year and across years
 spr_pa <- sprich(occ_df = occ_pa) %>% 
   dplyr::left_join(GB_func_spp, by = "grp") %>% 
   dplyr::mutate(pspr = spr / n)
@@ -380,8 +382,11 @@ spr_unp <- sprich(occ_df = occ_unp) %>%
   dplyr::left_join(GB_func_spp, by = "grp") %>% 
   dplyr::mutate(pspr = spr / n)
 
-spr_comb <- dplyr::bind_rows(dplyr::select(spr_pa, grp, iteration, prot, spr, pspr), dplyr::select(spr_unp, grp, iteration, prot, spr, pspr))
+# combine protected and unprotected areas
+spr_comb <- dplyr::bind_rows(dplyr::select(spr_pa, grp, iteration, prot, spr, pspr), dplyr::select(spr_unp, grp, iteration, prot, spr, pspr)) %>% 
+  dplyr::ungroup()
 
+# function to calculate difference between protected and unprotected areas
 sprich_diff <- function(spr_df_pa, spr_df_unp) {
   
   spr_df <- dplyr::left_join(dplyr::select(spr_df_pa, grp, iteration, spr, pspr), dplyr::select(spr_df_unp, grp, iteration, spr, pspr), by = c("grp", "iteration")) %>% 
@@ -392,8 +397,8 @@ sprich_diff <- function(spr_df_pa, spr_df_unp) {
   spr_av <- spr_df %>% 
     dplyr::group_by(grp) %>% 
     dplyr::summarise_at(vars(spr_diff, pspr_diff), list(
-      ~mean, 
-      ~median, 
+      ~mean(.), 
+      ~median(.), 
       low_ci = ~HDInterval::hdi(., credMass = ci)[[1]],
       upp_ci = ~HDInterval::hdi(., credMass = ci)[[2]])) %>% 
     # add significance identifier
@@ -416,8 +421,10 @@ sprich_diff <- function(spr_df_pa, spr_df_unp) {
   
 }
 
+# calculate difference between protected and unprotected areas
 spr_diff_out <- sprich_diff(spr_df_pa = spr_pa, spr_df_unp = spr_unp)
 
+# overall
 spr_over <- est_plot_func(grp = "Overall", est_df = spr_comb, est_diff = spr_diff_out, vari = "spr", lim = c(-36, 36), axlab = "Species richness")
 
 # View(spr_over[[2]])
@@ -426,12 +433,14 @@ spr_over <- est_plot_func(grp = "Overall", est_df = spr_comb, est_diff = spr_dif
 
 # (spr_over[[2]][2,2] - spr_over[[2]][1,2])/spr_over[[2]][1,2] * 100
 
+# pollinators
 spr_poll <- est_plot_func(grp = "Pollinators", est_df = spr_comb, est_diff = spr_diff_out, vari = "spr", lim = c(-14, 14), axlab = "Species richness")
 
+# predators
 spr_pred <- est_plot_func(grp = "Predators", est_df = spr_comb, est_diff = spr_diff_out, vari = "spr", lim = c(-31, 31), axlab = "Species richness")
 
-# # save plots
-# cowplot::save_plot("outputs/sprich_over.png", spr_over[[1]], base_height = 6, base_width = 8, dpi = 300)
+# # save plot
+# cowplot::save_plot("outputs/fig2_sprich_over.png", spr_over[[1]], base_height = 6, base_width = 8, dpi = 300)
 
 ```
 
@@ -466,9 +475,11 @@ msi <- function(occ_df) {
   
 }
 
+# calculate multi-species indicator per iteration
 msi_pa <- msi(occ_df = occ_pa)
 msi_unp <- msi(occ_df = occ_unp)
 
+# function to summarise multi-species indicator across iterations
 msi_sum <- function(msi_df) {
   
   # average across iterations
@@ -477,17 +488,18 @@ msi_sum <- function(msi_df) {
     dplyr::summarise_at(vars(gm), list(
       ~mean, 
       ~median, 
-      #med_low_ci = ~HDInterval::hdi(., credMass = ci_w)[[1]], 
-      #med_upp_ci = ~HDInterval::hdi(., credMass = ci_w)[[2]],
       low_ci = ~HDInterval::hdi(., credMass = ci)[[1]],
       upp_ci = ~HDInterval::hdi(., credMass = ci)[[2]]))
 }
 
+# summarise multi-species indicator across iterations
 msi_sum_pa <- msi_sum(msi_df = msi_pa)
 msi_sum_unp <- msi_sum(msi_df = msi_unp)
 
+# combine protected and unprotected areas
 msi_sum_comb <- dplyr::bind_rows(msi_sum_pa, msi_sum_unp)
 
+# function to plot multi-species trends
 trend_plot_func <- function(grp, msi_sum, lim = NULL, leg = FALSE, leg_coord = NULL, axlab = "Geometric mean occupancy") {
   
   low_lim <- lim[[1]]
@@ -501,36 +513,34 @@ trend_plot_func <- function(grp, msi_sum, lim = NULL, leg = FALSE, leg_coord = N
   
   refe <- dplyr::filter(msi, year == 1990)
   
-  trend_plot <- ggplot(data = msi, aes(x = year, y = median, group = prot)) +
-    geom_hline(data = refe, aes(colour = prot, yintercept = median), lty = 2) +
+  trend_plot <- ggplot2::ggplot(data = msi, aes(x = year, y = median, group = prot)) +
+    ggplot2::geom_hline(data = refe, aes(colour = prot, yintercept = median), lty = 2) +
     # 95% CrI
-    geom_ribbon(aes(ymin = low_ci, ymax = upp_ci, fill = prot), alpha = 0.6) +
-    geom_line(aes(y = median, colour = prot)) +
-    geom_point(aes(colour = prot), size = 0.6) +
+    ggplot2::geom_ribbon(aes(ymin = low_ci, ymax = upp_ci, fill = prot), alpha = 0.6) +
+    ggplot2::geom_line(aes(y = median, colour = prot)) +
+    ggplot2::geom_point(aes(colour = prot), size = 0.6) +
     # scales
-    scale_y_continuous(name = axlab, limits = c(low_lim, upp_lim)) +
-    scale_x_continuous(name = "Year", breaks = scales::pretty_breaks(6), expand = c(0,0)) +
-    scale_colour_manual(name = "", values = c("#0077BB", "#EE7733")) +
-    scale_fill_manual(name = "", values = c("#5DC4FF", "#F6BB99")) +
-    theme(legend.position = "none")
+    ggplot2::scale_y_continuous(name = axlab, limits = c(low_lim, upp_lim)) +
+    ggplot2::scale_x_continuous(name = "Year", breaks = scales::pretty_breaks(6), expand = c(0,0)) +
+    ggplot2::scale_colour_manual(name = "", values = c("#0077BB", "#EE7733")) +
+    ggplot2::scale_fill_manual(name = "", values = c("#5DC4FF", "#F6BB99")) +
+    ggplot2::theme(legend.position = "none")
   
   if(leg == TRUE) trend_plot <- trend_plot + 
-    annotate("text", x = leg_coord[1], y = leg_coord[2], label = "Protected", colour = "#0077BB", size = 6) + 
-    annotate("text", x = leg_coord[3], y = leg_coord[4], label = "Unprotected", colour = "#EE7733", size = 6) 
-  
-  # trend_title <- cowplot::ggdraw() +
-  #   cowplot::draw_label(paste0(grp, " (n = ", format(numb$n, big.mark = ","), ")"), fontface = 'bold')
-  # 
-  # trend_plot <- cowplot::plot_grid(trend_title, trend_plot, nrow = 2, rel_heights = c(0.08, 1))
+    ggplot2::annotate("text", x = leg_coord[1], y = leg_coord[2], label = "Protected", colour = "#0077BB", size = 6) + 
+    ggplot2::annotate("text", x = leg_coord[3], y = leg_coord[4], label = "Unprotected", colour = "#EE7733", size = 6) 
   
   return(trend_plot)
   
 }
 
+# overall
 msi_over <- trend_plot_func(grp = "Overall", msi_sum = msi_sum_comb, lim = c(0.043, 0.082), leg = TRUE, leg_coord = c(2015, 0.076, 2015, 0.053))
 
+# pollinators
 msi_poll <- trend_plot_func(grp = "Pollinators", msi_sum = msi_sum_comb, lim = c(0.037, 0.087), axlab = "Geometric\nmean occupancy")
 
+# predators
 msi_pred <- trend_plot_func(grp = "Predators", msi_sum = msi_sum_comb, lim = c(0.044, 0.084), axlab = "Geometric\nmean occupancy")
 
 ```
@@ -573,10 +583,11 @@ trend_change <- function(occ_df, taxa) {
   
 }
 
+# calculate annual growth rate per species
 trend_pa <- trend_change(occ_df = dplyr::select(occ_pa, -tax_grp), taxa = unique(occ_unp$grp))
 trend_unp <- trend_change(occ_df = dplyr::select(occ_unp, -tax_grp), taxa = unique(occ_unp$grp))
 
-# function to calculate annual growth rate per group
+# function to summarise annual growth rate per group
 tax_change <- function(trend_df) {
   
   chng_tax <- trend_df %>% 
@@ -584,9 +595,11 @@ tax_change <- function(trend_df) {
     dplyr::summarise(change = mean(change))
 }
 
+# summarise annual growth rate per group
 chng_pa <- tax_change(trend_df = trend_pa)
 chng_unp <- tax_change(trend_df = trend_unp)
 
+# combine protected and unprotected areas
 chng_comb <- dplyr::bind_rows(
   dplyr::select(chng_pa, grp, iteration, change) %>% 
     dplyr::mutate(prot = "Protected"), 
@@ -594,6 +607,7 @@ chng_comb <- dplyr::bind_rows(
     dplyr::mutate(prot = "Unprotected")) %>% 
     dplyr::mutate(prot = factor(prot, levels = c("Unprotected", "Protected")))
 
+# function to calculate difference in growth rates between protected and unprotected areas
 change_diff <- function(chng_df_pa, chng_df_unp) {
   
   # combine protected and unprotected
@@ -608,16 +622,12 @@ change_diff <- function(chng_df_pa, chng_df_unp) {
     dplyr::summarise_at(vars(change_diff), list(
       change_diff_mean = ~mean, 
       change_diff_median = ~median, 
-      # change_diff_med_low_ci = ~HDInterval::hdi(., credMass = ci_w)[[1]], 
-      # change_diff_med_upp_ci = ~HDInterval::hdi(., credMass = ci_w)[[2]],
       change_diff_low_ci = ~HDInterval::hdi(., credMass = ci)[[1]],
       change_diff_upp_ci = ~HDInterval::hdi(., credMass = ci)[[2]])) %>% 
     # add significance identifier
     dplyr::mutate(change_sig = dplyr::case_when(
       change_diff_low_ci > 0 & change_diff_upp_ci > 0 ~ "spos",
       change_diff_low_ci < 0 & change_diff_upp_ci < 0 ~ "sneg",
-      # change_diff_med_low_ci > 0 & change_diff_med_upp_ci > 0 ~ "wpos",
-      # change_diff_med_low_ci > 0 & change_diff_med_upp_ci > 0 ~ "wneg",
       TRUE ~ "ns"
     )) %>% 
     dplyr::mutate(change_sig = factor(change_sig, levels = c("sneg", "ns", "spos")))
@@ -627,22 +637,27 @@ change_diff <- function(chng_df_pa, chng_df_unp) {
     return(list(chng_df, chng_av))
 }
 
+# calculate difference in growth rates between protected and unprotected areas
 chng_diff_out <- change_diff(chng_df_pa = chng_pa, chng_df_unp = chng_unp)
 
+# overall
 chng_over <- est_plot_func(grp = "Overall", est_df = chng_comb, est_diff = chng_diff_out, vari = "change", lim = c(-1.8, 1.8), axlab = "Growth rate")
 
 # View(chng_over[[2]])
 # View(chng_over[[3]])
 # View(chng_over[[4]])
 
+# pollinators
 chng_poll <- est_plot_func(grp = "Pollinators", est_df = chng_comb, est_diff = chng_diff_out, vari = "change", lim = c(-2.8, 2.8), axlab = "Growth rate")
 
+# predators
 chng_pred <- est_plot_func(grp = "Predators", est_df = chng_comb, est_diff = chng_diff_out, vari = "change", lim = c(-2.4, 2.4), axlab = "Growth rate")
 
+# combine msi and growth rate plots
 chng_comb_over <- cowplot::plot_grid(msi_over, chng_over[[1]], nrow = 2, labels = "AUTO")
 
 # # save plot
-# cowplot::save_plot("outputs/chng_comb_over.png", chng_comb_over, base_height = 11, base_width = 9, dpi = 300)
+# cowplot::save_plot("outputs/fig3_chng_comb_over.png", chng_comb_over, base_height = 11, base_width = 9, dpi = 300)
 
 ```
 
@@ -650,6 +665,9 @@ chng_comb_over <- cowplot::plot_grid(msi_over, chng_over[[1]], nrow = 2, labels 
 
 ```{r}
 
+# # calculate temporal beta diversity per iteration
+# # takes a while so save output
+# # uses beta_tbi_func
 # beta_tbi <- lapply(unique(occ_pa$grp), function(xgrp) {
 # 
 #   out <- lapply(1:999, function(x) beta_tbi_func(grp = xgrp, it = x, occ_df_pa = occ_pa, occ_df_unp = occ_unp) %>%
@@ -662,11 +680,14 @@ chng_comb_over <- cowplot::plot_grid(msi_over, chng_over[[1]], nrow = 2, labels 
 # 
 # saveRDS(beta_tbi, "data/beta_tbi.rds")
 
+# beta diversity estimates
 beta_tbi <- readRDS("data/beta_tbi.rds") %>% 
   dplyr::mutate(prot = factor(prot, levels = c("Unprotected", "Protected")))
 
+# contrast beta diversity estimates
 beta_contr <- dplyr::left_join(dplyr::filter(beta_tbi, prot == "Protected"), dplyr::filter(beta_tbi, prot == "Unprotected"), by = c("iteration", "grp"))
 
+# function to calculate difference in beta diversity between protected and unprotected areas
 beta_diff <- function(beta_df) {
   
   beta_df <- beta_df %>% 
@@ -707,56 +728,69 @@ beta_diff <- function(beta_df) {
     return(list(beta_df, beta_av))
 }
 
+# calculate difference in beta diversity between protected and unprotected areas
 beta_diff_out <- beta_diff(beta_df = beta_contr)
 
-# total
+## total temporal beta diversity
 
+# overall
 beta_over <- est_plot_func(grp = "Overall", est_df = beta_tbi, est_diff = beta_diff_out, vari = "tbi_val", lim = c(-0.022, 0.022), axlab = "Temporal beta diversity")
 
 # View(beta_over[[2]])
 # View(beta_over[[3]])
 # View(beta_over[[4]])
 
+# pollinators
 beta_poll <- est_plot_func(grp = "Pollinators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "tbi_val", lim = c(-0.031, 0.031), axlab = "Temporal\nbeta diversity")
 
+# predators
 beta_pred <- est_plot_func(grp = "Predators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "tbi_val", lim = c(-0.025, 0.025), axlab = "Temporal\nbeta diversity")
 
-# loss
+## loss
 
+# overall
 loss_over <- est_plot_func(grp = "Overall", est_df = beta_tbi, est_diff = beta_diff_out, vari = "loss", lim = c(-0.027, 0.027), axlab = "Loss")
 
+# pollinators
 loss_poll <- est_plot_func(grp = "Pollinators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "loss", lim = c(-0.023, 0.023), axlab = "Loss")
 
+# predators
 loss_pred <- est_plot_func(grp = "Predators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "loss", lim = c(-0.038, 0.038), axlab = "Loss")
 
-# gain
+## gain
 
+# overall
 gain_over <- est_plot_func(grp = "Overall", est_df = beta_tbi, est_diff = beta_diff_out, vari = "gain", lim = c(-0.024, 0.024), axlab = "Gain")
 
+# pollinators
 gain_poll <- est_plot_func(grp = "Pollinators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "gain", lim = c(-0.031, 0.031), axlab = "Gain")
 
+# predators
 gain_pred <- est_plot_func(grp = "Predators", est_df = beta_tbi, est_diff = beta_diff_out, vari = "gain", lim = c(-0.031, 0.031), axlab = "Gain")
 
+# beta diversity plot for overall
 beta_over_plot <- cowplot::plot_grid(NULL, beta_over[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "A", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_over[[1]], gain_over[[1]], nrow = 1, labels = c("B", "C")), nrow = 2)
 
 # # save plot
-# cowplot::save_plot("outputs/beta_over.png", beta_over_plot, base_height = 8, base_width = 12, dpi = 300)
+# cowplot::save_plot("outputs/fig4_beta_over.png", beta_over_plot, base_height = 8, base_width = 12, dpi = 300)
 
-#### Pollinators ####
+## Pollinators combined plots
 
 beta_poll_plot <- cowplot::plot_grid(NULL, beta_poll[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "D", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_poll[[1]], gain_poll[[1]], nrow = 1, labels = c("E", "F")), nrow = 2)
 
 poll_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_poll[[1]], NULL, labels = c("", "A", ""), rel_widths = c(0.4, 1, 0.4), ncol = 3), cowplot::plot_grid(msi_poll, chng_poll[[1]], labels = c("B", "C"), ncol = 2), beta_poll_plot, nrow = 3, rel_heights = c(1, 1, 2))
 
 # # save plot
-# cowplot::save_plot("outputs/poll.png", poll_plot, base_height = 12, base_width = 10, dpi = 300)
+# cowplot::save_plot("outputs/fig5_poll.png", poll_plot, base_height = 12, base_width = 10, dpi = 300)
+
+## Predators combined plots
 
 beta_pred_plot <- cowplot::plot_grid(NULL, beta_pred[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "D", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_pred[[1]], gain_pred[[1]], nrow = 1, labels = c("E", "F")), nrow = 2)
 
 pred_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_pred[[1]], NULL, labels = c("", "A", ""), rel_widths = c(0.4, 1, 0.4), ncol = 3), cowplot::plot_grid(msi_pred, chng_pred[[1]], labels = c("B", "C"), ncol = 2), beta_pred_plot, nrow = 3, rel_heights = c(1, 1, 2))
 
 # # save plot
-# cowplot::save_plot("outputs/pred.png", pred_plot, base_height = 12, base_width = 10, dpi = 300)
+# cowplot::save_plot("outputs/figs10_pred.png", pred_plot, base_height = 12, base_width = 10, dpi = 300)
 
 ```
 
@@ -788,36 +822,36 @@ sites <- sites_orig %>%
 sites_gr <- readRDS("data/sites_gr.rds")
   
 pro_plot <- ggplot2::ggplot(data = sites_gr, aes(x = EASTING, y = NORTHING, fill = prot)) +
-  geom_raster() +
-  coord_equal() +
-  scale_fill_manual(breaks = c("pa", "unp"), labels = c("Protected", "Unprotected"), values = c("#0077BB", "#EE7733", "grey")) +
-  theme_void() +
-  theme(legend.title = element_blank(),
+  ggplot2::geom_raster() +
+  ggplot2::coord_equal() +
+  ggplot2::scale_fill_manual(breaks = c("pa", "unp"), labels = c("Protected", "Unprotected"), values = c("#0077BB", "#EE7733", "grey")) +
+  ggplot2::theme_void() +
+  ggplot2::theme(legend.title = element_blank(),
         legend.position = "bottom")
 
-euro <- map_data("world") %>% 
+euro <- ggplot2::map_data("world") %>% 
   dplyr::mutate(GB = as.factor(ifelse(subregion %in% c("Great Britain", "Wales", "Isle of Wight", "Scotland"), 1, 0)))
 
-euro_plot <- ggplot(euro, aes(x = long, y = lat)) +
-  geom_polygon(aes(group = group, fill = GB, colour = GB), size = 0.3) +
-  coord_map(project = "orthographic", xlim = c(-12,44), ylim = c(35,70)) +
-  scale_fill_manual(values = c("grey", "black")) +
-  scale_colour_manual(values = c("darkgrey", "black")) +
-  scale_x_continuous(breaks = seq(-140, 60, by = 20))+
-  scale_y_continuous(breaks = seq(10, 90, by = 20)) +
-  theme_bw() +
-  theme(panel.grid.major = element_line(colour = "lightgrey"),
-        panel.border = element_rect(colour = "black"),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.position = "none")
+euro_plot <- ggplot2::ggplot(euro, aes(x = long, y = lat)) +
+  ggplot2::geom_polygon(aes(group = group, fill = GB, colour = GB), size = 0.3) +
+  ggplot2::coord_map(project = "orthographic", xlim = c(-12,44), ylim = c(35,70)) +
+  ggplot2::scale_fill_manual(values = c("grey", "black")) +
+  ggplot2::scale_colour_manual(values = c("darkgrey", "black")) +
+  ggplot2::scale_x_continuous(breaks = seq(-140, 60, by = 20))+
+  ggplot2::scale_y_continuous(breaks = seq(10, 90, by = 20)) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(panel.grid.major = element_line(colour = "lightgrey"),
+                 panel.border = element_rect(colour = "black"),
+                 axis.title = element_blank(),
+                 axis.ticks = element_blank(),
+                 axis.text = element_blank(),
+                 legend.position = "none")
 
 pro_sub_plot <- cowplot::ggdraw(pro_plot) +
   cowplot::draw_plot(euro_plot, 0.63, 0.55, 0.35, 0.35)
 
 # # save: pro_sub_plot
-# cowplot::save_plot("outputs/pro_sub.png", pro_sub_plot, base_height = 6, base_width = 6, dpi = 300)
+# cowplot::save_plot("outputs/fig1_pro_sub.png", pro_sub_plot, base_height = 6, base_width = 6, dpi = 300)
 
 ```
 
@@ -1070,9 +1104,11 @@ conv_spp <- fl_rhat %>%
 
 ```{r}
 
+# filter to species whose models converged
 occ_pa_conv <- dplyr::filter(occ_pa, species %in% conv_spp$species)
 occ_unp_conv <- dplyr::filter(occ_unp, species %in% conv_spp$species)
 
+# species richness
 spr_pa_conv <- sprich(occ_df = occ_pa_conv) %>% 
   dplyr::left_join(GB_func_spp, by = "grp") %>% 
   dplyr::mutate(pspr = spr / n)
@@ -1086,6 +1122,7 @@ spr_diff_out_conv <- sprich_diff(spr_df_pa = spr_pa_conv, spr_df_unp = spr_unp_c
 
 spr_over_conv <- est_plot_func(grp = "Overall", est_df = spr_comb_conv, est_diff = spr_diff_out_conv, vari = "spr", lim = c(-14, 14), axlab = "Species richness")
 
+# multi-species indicator
 msi_pa_conv <- msi(occ_df = occ_pa_conv)
 msi_unp_conv <- msi(occ_df = occ_unp_conv)
 
@@ -1096,6 +1133,7 @@ msi_sum_comb_conv <- dplyr::bind_rows(msi_sum_pa_conv, msi_sum_unp_conv)
 
 msi_over_conv <- trend_plot_func(grp = "Overall", msi_sum = msi_sum_comb_conv, lim = c(0.055, 0.12), leg = FALSE, axlab = "Geometric\nmean occupancy")
 
+# growth rates
 trend_pa_conv <- trend_change(occ_df = dplyr::select(occ_pa_conv, -tax_grp), taxa = unique(occ_unp_conv$grp))
 trend_unp_conv <- trend_change(occ_df = dplyr::select(occ_unp_conv, -tax_grp), taxa = unique(occ_unp_conv$grp))
 
@@ -1115,6 +1153,7 @@ chng_over_conv <- est_plot_func(grp = "Overall", est_df = chng_comb_conv, est_di
 
 chng_comb_over_conv <- cowplot::plot_grid(msi_over_conv, chng_over_conv[[1]], nrow = 2, labels = "AUTO")
 
+# # beta diversity
 # beta_tbi_conv <- lapply(unique(occ_pa_conv$grp), function(xgrp) {
 # 
 #   out <- lapply(1:999, function(x) beta_tbi_func(grp = xgrp, it = x, occ_df_pa = occ_pa_conv, occ_df_unp = occ_unp_conv)) %>%
@@ -1134,9 +1173,11 @@ beta_contr_conv <- dplyr::left_join(dplyr::filter(beta_tbi_conv, prot == "Protec
 
 beta_diff_out_conv <- beta_diff(beta_df = beta_contr_conv)
 
-# total
+## total temporal beta diversity
 
 beta_over_conv <- est_plot_func(grp = "Overall", est_df = beta_tbi_conv, est_diff = beta_diff_out_conv, vari = "tbi_val", lim = c(-0.028, 0.028), axlab = "Temporal beta diversity")
+
+## loss
 
 loss_over_conv <- est_plot_func(grp = "Overall", est_df = beta_tbi_conv, est_diff = beta_diff_out_conv, vari = "loss", lim = c(-0.023, 0.023), axlab = "Loss")
 
@@ -1144,7 +1185,7 @@ loss_over_conv <- est_plot_func(grp = "Overall", est_df = beta_tbi_conv, est_dif
 # View(loss_over_conv[[3]])
 # View(loss_over_conv[[4]])
 
-# gain
+## gain
 
 gain_over_conv <- est_plot_func(grp = "Overall", est_df = beta_tbi_conv, est_diff = beta_diff_out_conv, vari = "gain", lim = c(-0.014, 0.014), axlab = "Gain")
 
@@ -1152,14 +1193,12 @@ gain_over_conv <- est_plot_func(grp = "Overall", est_df = beta_tbi_conv, est_dif
 # View(gain_over_conv[[3]])
 # View(gain_over_conv[[4]])
 
-beta_over_plot_conv <- cowplot::plot_grid(NULL, beta_over_conv[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "A", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_over_conv[[1]], gain_over_conv[[1]], nrow = 1, labels = c("B", "C")), nrow = 2)
-
 beta_over_plot_conv <- cowplot::plot_grid(NULL, beta_over_conv[[1]], NULL, nrow = 1, rel_widths = c(0.4, 1, 0.4), labels = c("", "D", "")) %>% cowplot::plot_grid(., cowplot::plot_grid(loss_over_conv[[1]], gain_over_conv[[1]], nrow = 1, labels = c("E", "F")), nrow = 2)
 
 conv_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_over_conv[[1]], NULL, labels = c("", "A", ""), rel_widths = c(0.4, 1, 0.4), ncol = 3), cowplot::plot_grid(msi_over_conv, chng_over_conv[[1]], labels = c("B", "C"), ncol = 2), beta_over_plot_conv, nrow = 3, rel_heights = c(1, 1, 2))
 
 # # save plot
-# cowplot::save_plot("outputs/conv.png", conv_plot, base_height = 12, base_width = 10, dpi = 300)
+# cowplot::save_plot("outputs/figs9_conv.png", conv_plot, base_height = 12, base_width = 10, dpi = 300)
 
 ```
 
@@ -1167,11 +1206,11 @@ conv_plot <- cowplot::plot_grid(cowplot::plot_grid(NULL, spr_over_conv[[1]], NUL
 
 ```{r}
 
-all_obs <- readRDS("data/occ_assess/all_obs.rds") %>% 
+all_obs <- readRDS("data/all_obs.rds") %>% 
   dplyr::mutate(spatialUncertainty = NA,
                 identifier = "Overall")
 
-sites_gr <- readRDS("occ_assess/sites_gr.rds")
+sites_gr <- readRDS("data/sites_gr.rds")
 
 pa_rast <- raster::rasterFromXYZ(dplyr::filter(sites_gr, prot == "pa") %>% dplyr::mutate(z = 1) %>% dplyr::select(x = EASTING, y = NORTHING, z))
 
@@ -1197,18 +1236,18 @@ colrs_nam <- c("1" = colrs[1], "2" = colrs[2], "3" = colrs[3], "4" = colrs[4], "
 ## Spatiotemporal coverage ##
 
 # protected
-maps_pers_tax_pa <- assessSpatialCov_adapt(dat = dplyr::filter(all_obs, prot == "pa"), periods = periods, res = 1000, logCount = TRUE, species = "species", x = "EASTING", y = "NORTHING", year = "year", spatialUncertainty = "spatialUncertainty", identifier = "tax_grp", output = "nPeriods", sites_gr = sites_gr, pa = TRUE)
+maps_pers_tax_pa <- assessSpatialCov_adapt(dat = dplyr::filter(all_obs, prot == "pa"), periods = periods, res = 1000, logCount = TRUE, species = "species", x = "EASTING", y = "NORTHING", year = "year", spatialUncertainty = "spatialUncertainty", identifier = "tax_grp", output = "nPeriods", sites_gr = sites_gr, pa = TRUE) # adapted occAssess::assessSpatialCov
 
 maps_pers_tax_pa_func <- function(x, leg = FALSE) {
   
   maps_out <- maps_pers_tax_pa[[x]] +
-    coord_equal() +
+    ggplot2::coord_equal() +
     # add maximum repeated value
-    geom_text(x = 550000, y = 600000, label = max(maps_pers_tax_pa[[x]]$data$value, na.rm = TRUE), size = 3) +
+    ggplot2::geom_text(x = 550000, y = 600000, label = max(maps_pers_tax_pa[[x]]$data$value, na.rm = TRUE), size = 3) +
     # change colour scheme
     ggplot2::scale_fill_manual(values = colrs_nam[2:max(maps_pers_tax_pa[[x]]$data$value, na.rm = TRUE)], na.value = "white", na.translate = FALSE, name = "Number of years sampled", drop = FALSE) +
     # edit theme
-    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    ggplot2::theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
   # legend
   if(leg == FALSE) {maps_out <- maps_out + 
@@ -1226,13 +1265,13 @@ maps_pers_tax_unp <- assessSpatialCov_adapt(dat = dplyr::filter(all_obs, prot ==
 maps_pers_tax_unp_func <- function(x, leg = FALSE) {
   
   maps_out <- maps_pers_tax_unp[[x]] +
-    coord_equal() +
+    ggplot2::coord_equal() +
     # add maximum repeated value
-    geom_text(x = 550000, y = 600000, label = max(maps_pers_tax_unp[[x]]$data$value, na.rm = TRUE), size = 3) +
+    ggplot2::geom_text(x = 550000, y = 600000, label = max(maps_pers_tax_unp[[x]]$data$value, na.rm = TRUE), size = 3) +
     # change colour scheme
     ggplot2::scale_fill_manual(values = colrs_nam[2:max(maps_pers_tax_unp[[x]]$data$value, na.rm = TRUE)], na.value = "white", na.translate = FALSE, name = "Number of years sampled", drop = FALSE) +
     # edit theme
-    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    ggplot2::theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   # legend
   if(leg == FALSE) {maps_out <- maps_out + 
@@ -1247,18 +1286,17 @@ maps_pers_tax_unp_out <- lapply(1:length(maps_pers_tax_unp), maps_pers_tax_unp_f
 # combine
 maps_pers_tax_comb <- cowplot::plot_grid(cowplot::plot_grid(maps_pers_tax_pa_out[[1]], maps_pers_tax_unp_out[[1]]), cowplot::plot_grid(maps_pers_tax_pa_out[[2]], maps_pers_tax_unp_out[[2]]), cowplot::plot_grid(maps_pers_tax_pa_out[[3]], maps_pers_tax_unp_out[[3]]), cowplot::plot_grid(maps_pers_tax_pa_out[[4]], maps_pers_tax_unp_out[[4]]), cowplot::plot_grid(maps_pers_tax_pa_out[[5]], maps_pers_tax_unp_out[[5]]), cowplot::plot_grid(maps_pers_tax_pa_out[[6]], maps_pers_tax_unp_out[[6]]), ncol = 2)
 
-# cowplot::save_plot("occ_assess/maps_pers_tax.png", maps_pers_tax_comb, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
-
 # generate legend
-maps_pers_leg <- cowplot::get_legend(maps_pers_tax_pa_func(3) + scale_fill_manual(values = colrs_nam[2:max(maps_pers_tax_pa[[3]]$data$value, na.rm = TRUE)], na.value = "white", name = "Number of\nyears sampled", drop = FALSE) + theme(legend.position = "bottom", legend.direction = "horizontal"))
+maps_pers_leg <- cowplot::get_legend(maps_pers_tax_pa_func(3) + ggplot2::scale_fill_manual(values = colrs_nam[2:max(maps_pers_tax_pa[[3]]$data$value, na.rm = TRUE)], na.value = "white", name = "Number of\nyears sampled", drop = FALSE) + ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal"))
 
 # add legend to plot
 maps_pers_tax_comb_leg <- cowplot::plot_grid(maps_pers_tax_comb, cowplot::plot_grid(NULL, maps_pers_leg, NULL, ncol = 3), ncol = 1, rel_heights = c(3, 0.5))
 
-maps_pers_tax_comb_leg2 <- ggdraw(maps_pers_tax_comb_leg) +
-  theme(plot.background = element_rect(fill = "white", color = NA))
+maps_pers_tax_comb_leg2 <- cowplot::ggdraw(maps_pers_tax_comb_leg) +
+  ggplot2::theme(plot.background = element_rect(fill = "white", color = NA))
 
-# cowplot::save_plot("occ_assess/maps_pers_tax.png", maps_pers_tax_comb_leg, base_height = 12, base_aspect_ratio = 0.7, dpi = 600)
+# # save plot
+# cowplot::save_plot("outputs/figs1_maps_pers_tax.png", maps_pers_tax_comb_leg, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
 
 ## Spatial coverage ##
 
@@ -1271,15 +1309,15 @@ maps_tax_pa_func <- function(x, leg = TRUE) {
   
   maps_out <- maps_tax_pa[[x]] +
     # change period names
-    facet_wrap(. ~ variable, labeller = period_labeller) +
+    ggplot2::facet_wrap(. ~ variable, labeller = period_labeller) +
     # change fill colour
     ggplot2::scale_fill_gradient2(low = "#d9d9d9", high = "#000000", na.value = trans_col, name = expression("log"[10]*"(n records)")) +
     # edit theme
-    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    ggplot2::theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   # legend
   if(leg == FALSE) {maps_out <- maps_out + 
-    theme(legend.position = "none")}
+    ggplot2::theme(legend.position = "none")}
   
   return(maps_out)
   
@@ -1294,15 +1332,15 @@ maps_tax_unp_func <- function(x, leg = TRUE) {
   
   maps_out <- maps_tax_unp[[x]] +
     # change period names
-    facet_wrap(. ~ variable, labeller = period_labeller) +
+    ggplot2::facet_wrap(. ~ variable, labeller = period_labeller) +
     # change fill colour
     ggplot2::scale_fill_gradient2(low = "#d9d9d9", high = "#000000", na.value = trans_col, name = expression("log"[10]*"(n records)")) +
     # edit theme
-    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    ggplot2::theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
   # legend
   if(leg == FALSE) {maps_out <- maps_out + 
-    theme(legend.position = "none")}
+    ggplot2::theme(legend.position = "none")}
   
   return(maps_out)
   
@@ -1313,19 +1351,19 @@ maps_tax_unp_out <- lapply(1:length(maps_tax_unp), maps_tax_unp_func)
 # combine
 
 # ants, bees
-maps_ab <- cowplot::plot_grid(maps_tax_pa_out[[1]] + labs(title = "Ants"), maps_tax_unp_out[[1]] + labs(title = "Ants"), maps_tax_pa_out[[2]] + labs(title = "Bees"), maps_tax_unp_out[[2]] + labs(title = "Bees"), ncol = 2)
+maps_ab <- cowplot::plot_grid(maps_tax_pa_out[[1]] + ggplot2::labs(title = "Ants"), maps_tax_unp_out[[1]] + ggplot2::labs(title = "Ants"), maps_tax_pa_out[[2]] + ggplot2::labs(title = "Bees"), maps_tax_unp_out[[2]] + ggplot2::labs(title = "Bees"), ncol = 2)
 
-cowplot::save_plot("occ_assess/maps_ab.png", maps_ab, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
+# cowplot::save_plot("outputs/figs2_maps_ab.png", maps_ab, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
 
 # hoverflies, ladybirds
-maps_hl <- cowplot::plot_grid(maps_tax_pa_out[[3]] + labs(title = "Hoverflies"), maps_tax_unp_out[[3]] + labs(title = "Hoverflies"), maps_tax_pa_out[[4]] + labs(title = "Ladybirds"), maps_tax_unp_out[[4]] + labs(title = "Ladybirds"), ncol = 2)
+maps_hl <- cowplot::plot_grid(maps_tax_pa_out[[3]] + ggplot2::labs(title = "Hoverflies"), maps_tax_unp_out[[3]] + ggplot2::labs(title = "Hoverflies"), maps_tax_pa_out[[4]] + ggplot2::labs(title = "Ladybirds"), maps_tax_unp_out[[4]] + ggplot2::labs(title = "Ladybirds"), ncol = 2)
 
-cowplot::save_plot("occ_assess/maps_hl.png", maps_hl, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
+# cowplot::save_plot("outputs/figs3_maps_hl.png", maps_hl, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
 
 # spiders, wasps
-maps_sw <- cowplot::plot_grid(maps_tax_pa_out[[5]] + labs(title = "Spiders"), maps_tax_unp_out[[5]] + labs(title = "Spiders"), maps_tax_pa_out[[6]] + labs(title = "Wasps"), maps_tax_unp_out[[6]] + labs(title = "Wasps"), ncol = 2)
+maps_sw <- cowplot::plot_grid(maps_tax_pa_out[[5]] + ggplot2::labs(title = "Spiders"), maps_tax_unp_out[[5]] + ggplot2::labs(title = "Spiders"), maps_tax_pa_out[[6]] + ggplot2::labs(title = "Wasps"), maps_tax_unp_out[[6]] + ggplot2::labs(title = "Wasps"), ncol = 2)
 
-cowplot::save_plot("occ_assess/maps_sw.png", maps_sw, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
+# cowplot::save_plot("outputs/figs4_maps_sw.png", maps_sw, base_height = 12, base_aspect_ratio = 0.7, dpi = 300)
 
 ## Spatial bias ##
 
@@ -1340,19 +1378,19 @@ spat_tax_func <- function(tax) {
     dplyr::mutate(year = as.numeric(Period) + 1989) %>% 
     dplyr::mutate(identifier = dplyr::recode(identifier, pa = "Protected", unp = "Unprotected"))
   
-  spatBias_tax_out <- ggplot(data = spat_dat_tax, aes(x = year, y = mean, ymin = lower, ymax = upper, colour = identifier, fill = identifier)) + 
-    geom_hline(yintercept = 1, colour = "grey", lty = 2) +
-    geom_line() + 
-    geom_point() + 
-    geom_ribbon(alpha = 0.5) + 
+  spatBias_tax_out <- ggplot2::ggplot(data = spat_dat_tax, aes(x = year, y = mean, ymin = lower, ymax = upper, colour = identifier, fill = identifier)) + 
+    ggplot2::geom_hline(yintercept = 1, colour = "grey", lty = 2) +
+    ggplot2::geom_line() + 
+    ggplot2::geom_point() + 
+    ggplot2::geom_ribbon(alpha = 0.5) + 
     # mean value across years
-    geom_text(x = 1992, y = 1.3, label = sprintf("%.2f", signif(mean(dplyr::filter(spat_dat_tax, identifier == "Protected")$mean), digits = 2)), colour = "#0077BB", size = 3) +
-    geom_text(x = 1992, y = 1.1, label = sprintf("%.2f", signif(mean(dplyr::filter(spat_dat_tax, identifier == "Unprotected")$mean), digits = 2)), colour = "#EE7733", size = 3) +
-    theme_linedraw() + 
-    scale_colour_manual(values = c("#0077BB", "#EE7733")) +
-    scale_fill_manual(values = c("#0077BB", "#EE7733")) +
-    labs(title = tax, x = "Year", y = "Nearest neighbour index", colour = "", fill = "") +
-    ylim(c(0, 1.4))
+    ggplot2::geom_text(x = 1992, y = 1.3, label = sprintf("%.2f", signif(mean(dplyr::filter(spat_dat_tax, identifier == "Protected")$mean), digits = 2)), colour = "#0077BB", size = 3) +
+    ggplot2::geom_text(x = 1992, y = 1.1, label = sprintf("%.2f", signif(mean(dplyr::filter(spat_dat_tax, identifier == "Unprotected")$mean), digits = 2)), colour = "#EE7733", size = 3) +
+    ggplot2::theme_linedraw() + 
+    ggplot2::scale_colour_manual(values = c("#0077BB", "#EE7733")) +
+    ggplot2::scale_fill_manual(values = c("#0077BB", "#EE7733")) +
+    ggplot2::labs(title = tax, x = "Year", y = "Nearest neighbour index", colour = "", fill = "") +
+    ggplot2::ylim(c(0, 1.4))
   
   return(spatBias_tax_out)
   
@@ -1361,16 +1399,16 @@ spat_tax_func <- function(tax) {
 # runs ~1 hour
 spatBias_tax <- lapply(unique(all_obs$tax_grp), spat_tax_func)
 
-spatBias_tax_leg <- cowplot::get_legend(spatBias_tax[[1]] +theme(legend.position = "bottom"))
+spatBias_tax_leg <- cowplot::get_legend(spatBias_tax[[1]] + ggplot2::theme(legend.position = "bottom"))
 
-spatBias_tax_comb <- cowplot::plot_grid(spatBias_tax[[1]] + theme(legend.position = "none"), spatBias_tax[[2]] + theme(legend.position = "none") + labs(y = ""), spatBias_tax[[3]] + theme(legend.position = "none"), spatBias_tax[[4]] + theme(legend.position = "none") + labs(y = ""), spatBias_tax[[5]] + theme(legend.position = "none"), spatBias_tax[[6]] + theme(legend.position = "none") + labs(y = ""), ncol = 2)
+spatBias_tax_comb <- cowplot::plot_grid(spatBias_tax[[1]] + ggplot2::theme(legend.position = "none"), spatBias_tax[[2]] + ggplot2::theme(legend.position = "none") + ggplot2::labs(y = ""), spatBias_tax[[3]] + ggplot2::theme(legend.position = "none"), spatBias_tax[[4]] + ggplot2::theme(legend.position = "none") + ggplot2::labs(y = ""), spatBias_tax[[5]] + ggplot2::theme(legend.position = "none"), spatBias_tax[[6]] + ggplot2::theme(legend.position = "none") + ggplot2::labs(y = ""), ncol = 2)
 
 spatBias_tax_comb_leg <- cowplot::plot_grid(spatBias_tax_comb, spatBias_tax_leg, ncol = 1, rel_heights = c(3, 0.3))
 
-spatBias_tax_comb2 <- ggdraw(spatBias_tax_comb_leg) +
-  theme(plot.background = element_rect(fill = "white", color = NA))
+spatBias_tax_comb2 <- cowplot::ggdraw(spatBias_tax_comb_leg) +
+  ggplot2::theme(plot.background = element_rect(fill = "white", color = NA))
 
-cowplot::save_plot("occ_assess/spat_bias_tax.png", spatBias_tax_comb2, base_height = 8, base_aspect_ratio = 1, dpi = 600)
+cowplot::save_plot("occ_assess/figs5_spat_bias_tax.png", spatBias_tax_comb2, base_height = 8, base_aspect_ratio = 1, dpi = 300)
 
 ## repeat visits ##
 
@@ -1403,13 +1441,13 @@ rep_plot <- function(tax, pa = NULL) {
   # plot
   p <- ggplot2::ggplot(data = dat, aes(x = EASTING, y = NORTHING)) +
   # add GB
-  geom_tile(data = sites_gr, aes(x = EASTING, y = NORTHING), fill = "grey", colour = "grey", lwd = 0, alpha = 0.4)
+    ggplot2::geom_tile(data = sites_gr, aes(x = EASTING, y = NORTHING), fill = "grey", colour = "grey", lwd = 0, alpha = 0.4)
   
   if(pa == TRUE) {
     
     p <- p + 
     # add protected areas
-  geom_tile(data = dplyr::filter(sites_gr, prot == "pa"), aes(x = EASTING, y = NORTHING), alpha = 0.5, fill = "#0077BB", colour = "#0077BB", lwd = 0)
+      ggplot2::geom_tile(data = dplyr::filter(sites_gr, prot == "pa"), aes(x = EASTING, y = NORTHING), alpha = 0.5, fill = "#0077BB", colour = "#0077BB", lwd = 0)
     
   }
   
@@ -1417,20 +1455,20 @@ rep_plot <- function(tax, pa = NULL) {
     
     p <- p + 
       # add unprotected areas
-      geom_tile(data = dplyr::filter(sites_gr, prot == "unp"), aes(x = EASTING, y = NORTHING), alpha = 0.5, fill = "#EE7733", colour = "#EE7733", lwd = 0)
+      ggplot2::geom_tile(data = dplyr::filter(sites_gr, prot == "unp"), aes(x = EASTING, y = NORTHING), alpha = 0.5, fill = "#EE7733", colour = "#EE7733", lwd = 0)
     
   }
   
   p <- p +
     # grid cells with repeat visits
-    geom_tile(fill = "black") +
-    coord_equal() +
-    labs(title = tax) +
+    ggplot2::geom_tile(fill = "black") +
+    ggplot2::coord_equal() +
+    ggplot2::labs(title = tax) +
     # split into periods
-    facet_wrap(~ perd_7) +
-    theme_linedraw() +
+    ggplot2::facet_wrap(~ perd_7) +
+    ggplot2::theme_linedraw() +
     # edit theme
-    theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    ggplot2::theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank(), panel.border = element_blank(), panel.grid = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
 }
 
@@ -1443,17 +1481,17 @@ rep_maps_unp <- lapply(unique(rep_vis$tax_grp), function(x) {rep_plot(tax = x, p
 # ants, bees
 rep_ab <- cowplot::plot_grid(rep_maps_pa[[1]], rep_maps_unp[[1]], rep_maps_pa[[2]], rep_maps_unp[[2]], ncol = 2)
 
-cowplot::save_plot("occ_assess/rep_ab.png", rep_ab, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
+cowplot::save_plot("outputs/figs6_rep_ab.png", rep_ab, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
 
 # hoverflies, ladybirds
 rep_hl <- cowplot::plot_grid(rep_maps_pa[[3]], rep_maps_unp[[3]], rep_maps_pa[[4]], rep_maps_unp[[4]], ncol = 2)
 
-cowplot::save_plot("occ_assess/rep_hl.png", rep_hl, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
+cowplot::save_plot("outputs/figs7_rep_hl.png", rep_hl, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
 
 # spiders, wasps
 rep_sw <- cowplot::plot_grid(rep_maps_pa[[5]], rep_maps_unp[[5]], rep_maps_pa[[6]], rep_maps_unp[[6]], ncol = 2)
 
-cowplot::save_plot("occ_assess/rep_sw.png", rep_sw, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
+cowplot::save_plot("outputs/figs8_rep_sw.png", rep_sw, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
 
 ```
 

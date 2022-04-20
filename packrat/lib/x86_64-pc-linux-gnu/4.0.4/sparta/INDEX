@@ -1,0 +1,42 @@
+WSS                     Well sampled sites model
+createWeights           Create frescalo weights file
+dataDiagnostics         Data Diagnostics
+dataMetrics             Calculate dataset metrics
+date2timeperiod         Assign dates to time periods
+formatOccData           Format data for Occupancy detection models
+frescalo                Frescalo trend analysis
+getBugsData             Modify the bugs data object depending on the
+                        type of model you are running
+getInitValues           Modify the init object depending on the type of
+                        model we are running
+getModelFile            Create a sparta JAGS model file fitting your
+                        needs
+getObsModel             Create the observation model component of a
+                        sparta JAGS model
+getParameters           Modify the initial values object depending on
+                        the type of model we are running
+gps_latlon2gr           Covert latitude and longitude to other formats
+gr2gps_latlon           Covert grid reference to latitude and longitude
+htmlSummary             Create HTML Report
+occDetFunc              Occupancy detection Function
+occDetModel             Occupancy detection models
+occurrenceChange        Calculate percentage change between two years
+                        using Bayesian output
+plot.occDet             Plot occDet Objects
+plot_DetectionOverTime
+                        Diagnostics for the detection model with
+                        respect to Length
+plot_DetectionPhenology
+                        Diagnostics for the detectability with respect
+                        to Julian Date
+plot_GIS                Plot GIS shape files
+recsOverTime            Histogram of records over time
+reportingRateModel      Run Reporting Rate Models
+simOccData              Simulate for Occupancy detection models
+siteSelection           Site selection method
+siteSelectionMinL       List-length site selection
+siteSelectionMinTP      Minimum time-period site selection
+sparta                  'sparta' Trend Analysis for Unstructured Data
+telfer                  Telfer's change index
+unicorns                A fictional dataset of unicorn sightings
+visitsSummary           Summarises visits

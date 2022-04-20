@@ -14,8 +14,13 @@ Source: RSPM
 Version: 0.2.2
 Hash: abfef5435e937a9132df7289d27fd647
 
-Package: R2WinBUGS
+Package: LearnBayes
 Source: RSPM
+Version: 2.15.1
+Hash: 3b27dfb2be0d5bf10a8842bb7b0a19db
+
+Package: R2WinBUGS
+Source: CRAN
 Version: 2.1-21
 Hash: 99ef58a6140e3b5957513c9524ec7a20
 Requires: coda
@@ -24,7 +29,7 @@ Package: R2jags
 Source: RSPM
 Version: 0.7-1
 Hash: bbc9f12e032b6ee9f21d419a83c99010
-Requires: R2WinBUGS, coda, abind, rjags
+Requires: abind, coda, R2WinBUGS, rjags
 
 Package: R6
 Source: CRAN
@@ -40,13 +45,19 @@ Package: RNeXML
 Source: RSPM
 Version: 2.4.6
 Hash: e1dd1a9a15cfe469548b5e01f3a27ae1
-Requires: XML, ape, dplyr, httr, lazyeval, plyr, reshape2, rlang,
-    stringi, stringr, tidyr, uuid, xml2
+Requires: ape, dplyr, plyr, reshape2, rlang, stringi, stringr, XML,
+    httr, lazyeval, tidyr, uuid, xml2
 
 Package: Rcpp
 Source: RSPM
 Version: 1.0.8.3
 Hash: 342731d762a1dbb4e8e94396a1f0a79f
+
+Package: RcppEigen
+Source: RSPM
+Version: 0.3.3.9.2
+Hash: 674e9a068839412d0e92907ea9b62bcc
+Requires: Rcpp
 
 Package: RcppProgress
 Source: RSPM
@@ -59,7 +70,7 @@ Version: 3.99-0.9
 Hash: 683f728baddccd5764fecc98835ac236
 
 Package: abind
-Source: RSPM
+Source: CRAN
 Version: 1.4-5
 Hash: 1ceb86ef5ebe776ed4753ab6165eb6d7
 
@@ -73,7 +84,7 @@ Package: adegenet
 Source: RSPM
 Version: 2.1.5
 Hash: f5fa8f41c173344fbffc0cc2985bfb7a
-Requires: ade4, ape, dplyr, reshape2, ggplot2, igraph, seqinr, shiny,
+Requires: ade4, ape, dplyr, ggplot2, igraph, reshape2, seqinr, shiny,
     vegan
 
 Package: adegraphics
@@ -119,7 +130,7 @@ Requires: ape, doSNOW, fastmatch, foreach, geometry, itertools,
     picante, rcdd, snow
 
 Package: brew
-Source: CRAN
+Source: RSPM
 Version: 1.0-6
 Hash: 931f9972deae0f205e1c78a51f33149b
 
@@ -132,10 +143,10 @@ Package: bslib
 Source: RSPM
 Version: 0.3.1
 Hash: 86fdae1dfb23e3154ae70b0999a2a01d
-Requires: jsonlite, rlang, htmltools, jquerylib, sass
+Requires: htmltools, jquerylib, jsonlite, rlang, sass
 
 Package: cachem
-Source: CRAN
+Source: RSPM
 Version: 1.0.4
 Hash: 8ba7d0e3593d47517fbabf30860d0eeb
 Requires: fastmap, rlang
@@ -159,7 +170,7 @@ Hash: f4afb5d894854c102b267975d45e380c
 Requires: glue
 
 Package: clipr
-Source: CRAN
+Source: RSPM
 Version: 0.7.1
 Hash: 50bca21c0c36d24984b051077cb15cf3
 
@@ -174,7 +185,7 @@ Version: 2.0-3
 Hash: fa1063854efff0a00b5fad89e2f20f47
 
 Package: commonmark
-Source: CRAN
+Source: RSPM
 Version: 1.7
 Hash: 77f4ba718e2bad1877ef26e48cf8fa43
 
@@ -195,13 +206,13 @@ Version: 1.4.1
 Hash: 2e1b6e4b4bc63ebe2aaee1546b871329
 
 Package: credentials
-Source: CRAN
+Source: RSPM
 Version: 1.3.0
 Hash: cb004dd454d30b4d3e3758e88144667f
 Requires: askpass, curl, jsonlite, openssl, sys
 
 Package: curl
-Source: CRAN
+Source: RSPM
 Version: 4.3.1
 Hash: 483291cb4444c3542a2a99903c217232
 
@@ -217,7 +228,7 @@ Hash: 3f74548f278428b009b0a31ba8d79302
 Requires: R6, crayon, rprojroot
 
 Package: devtools
-Source: CRAN
+Source: RSPM
 Version: 2.4.1
 Hash: 7f927a4b80e762b0c31c8c89e00eb070
 Requires: callr, cli, desc, ellipsis, fs, httr, lifecycle, rlang,
@@ -245,8 +256,8 @@ Package: dplyr
 Source: CRAN
 Version: 1.0.6
 Hash: da3b72d851a648c4994f40459d06ef23
-Requires: R6, ellipsis, generics, glue, lifecycle, magrittr, pillar,
-    rlang, tibble, tidyselect, vctrs
+Requires: R6, ellipsis, glue, lifecycle, magrittr, pillar, rlang,
+    tibble, vctrs, generics, tidyselect
 
 Package: e1071
 Source: RSPM
@@ -307,6 +318,12 @@ Source: CRAN
 Version: 1.5.0
 Hash: 918ea5c88cad73d5d5b529ca98f8ad11
 
+Package: gdata
+Source: RSPM
+Version: 2.18.0
+Hash: f4fdf56bd81ae3e1d42379678b472a34
+Requires: gtools
+
 Package: generics
 Source: CRAN
 Version: 0.1.0
@@ -319,7 +336,7 @@ Hash: ab2cad9965f8c4c992fd54f275da9cd0
 Requires: Rcpp, RcppProgress, linprog, lpSolve, magic
 
 Package: gert
-Source: CRAN
+Source: RSPM
 Version: 1.3.0
 Hash: 74674278db5ac2f01189fd3e8c033946
 Requires: askpass, credentials, openssl, rstudioapi, sys, zip
@@ -334,16 +351,16 @@ Package: ggplot2
 Source: RSPM
 Version: 3.3.5
 Hash: b54994f1f414ea1e2ecf978d298e9739
-Requires: glue, rlang, tibble, digest, gtable, isoband, scales, withr
+Requires: digest, glue, rlang, tibble, withr, gtable, isoband, scales
 
 Package: gh
-Source: CRAN
+Source: RSPM
 Version: 1.3.0
 Hash: b2943afd4ad40fe9c08579bb031dfbf2
 Requires: cli, httr, jsonlite, gitcreds, ini
 
 Package: gitcreds
-Source: CRAN
+Source: RSPM
 Version: 0.1.1
 Hash: 98010d78f363a29de674a252087aa340
 
@@ -362,6 +379,11 @@ Package: gtable
 Source: RSPM
 Version: 0.3.0
 Hash: a9e7b0666eb933a0cb36779240b4462e
+
+Package: gtools
+Source: RSPM
+Version: 3.9.2
+Hash: cf9d0d6ca0aaf6d9326459137701d93a
 
 Package: hexbin
 Source: RSPM
@@ -393,10 +415,10 @@ Hash: 0fe54fcbded50d7f874fc3798235dc98
 Requires: R6, Rcpp, later, promises
 
 Package: httr
-Source: CRAN
+Source: RSPM
 Version: 1.4.2
 Hash: 2ad813eba37ce1f357434789aa8b6132
-Requires: R6, curl, jsonlite, mime, openssl
+Requires: R6, jsonlite, mime, curl, openssl
 
 Package: igraph
 Source: RSPM
@@ -405,7 +427,7 @@ Hash: 2f1e10b788ab3b1e47298abc1b1bb229
 Requires: magrittr, pkgconfig
 
 Package: ini
-Source: CRAN
+Source: RSPM
 Version: 0.3.1
 Hash: 9d6de5178c1cedabfb24e7d2acc9a092
 
@@ -445,7 +467,7 @@ Package: knitr
 Source: CRAN
 Version: 1.33
 Hash: 524120cce0a17c3ff73a852a5157374e
-Requires: stringr, evaluate, highr, markdown, xfun, yaml
+Requires: evaluate, stringr, xfun, yaml, highr, markdown
 
 Package: labeling
 Source: RSPM
@@ -465,7 +487,7 @@ Hash: fc478c9494a7a44d50099e6578be3e84
 Requires: RColorBrewer, jpeg, png
 
 Package: lazyeval
-Source: RSPM
+Source: CRAN
 Version: 0.2.2
 Hash: 563563691bea3cde6945a98996d7c166
 
@@ -480,6 +502,12 @@ Source: RSPM
 Version: 0.9-4
 Hash: a0327403f7b60c5a4278e3abc6592fb0
 Requires: lpSolve
+
+Package: lme4
+Source: RSPM
+Version: 1.1-29
+Hash: 9a7fa5d8cf15642e33aee859dcf9dbc3
+Requires: Rcpp, RcppEigen, minqa, nloptr
 
 Package: lpSolve
 Source: RSPM
@@ -501,10 +529,10 @@ Package: markdown
 Source: CRAN
 Version: 1.1
 Hash: 1b6a18fd395589425e338a47b999099f
-Requires: mime, xfun
+Requires: xfun, mime
 
 Package: memoise
-Source: CRAN
+Source: RSPM
 Version: 2.0.0
 Hash: e0563c696c0d1962d554868fe46716d2
 Requires: cachem, rlang
@@ -514,11 +542,23 @@ Source: CRAN
 Version: 0.10
 Hash: 20b0f90f3478d2baae76be49777ac9fe
 
+Package: minqa
+Source: RSPM
+Version: 1.2.4
+Hash: e0c76fa8a412e9873106cb1aaf9b2936
+Requires: Rcpp
+
 Package: munsell
 Source: RSPM
 Version: 0.5.0
 Hash: 38d0efee9bb99bef143bde41c4ce715c
 Requires: colorspace
+
+Package: nloptr
+Source: RSPM
+Version: 2.0.0
+Hash: 858768694ac42ee696a2a7ad8c1581ac
+Requires: testthat
 
 Package: occAssess
 Source: github
@@ -529,20 +569,15 @@ GithubRepo: occAssess
 GithubUsername: robboyd
 GithubRef: HEAD
 GithubSha1: aacc515046a5e889693c20bd1ef38bc46f08e672
-RemoteHost: api.github.com
-RemoteRepo: occAssess
-RemoteUsername: robboyd
-RemoteRef: HEAD
-RemoteSha: aacc515046a5e889693c20bd1ef38bc46f08e672
 
 Package: openssl
-Source: CRAN
+Source: RSPM
 Version: 1.4.4
 Hash: f92eb4a4d54c1bf3db81697cae9344ce
 Requires: askpass
 
 Package: packrat
-Source: CRAN
+Source: RSPM
 Version: 0.6.0
 Hash: 62fd532b7524f498caa3cf4cc5f15490
 
@@ -560,7 +595,7 @@ Package: phylobase
 Source: RSPM
 Version: 0.8.10
 Hash: 517e115c09dfbc141e717ddde33fd924
-Requires: RNeXML, Rcpp, ade4, ape, rncl
+Requires: Rcpp, ade4, ape, RNeXML, rncl
 
 Package: picante
 Source: RSPM
@@ -572,7 +607,7 @@ Package: pillar
 Source: CRAN
 Version: 1.6.0
 Hash: 9e328e6484cba72897cac9b12a619db6
-Requires: ellipsis, lifecycle, rlang, cli, crayon, fansi, utf8, vctrs
+Requires: cli, crayon, ellipsis, fansi, lifecycle, rlang, vctrs, utf8
 
 Package: pixmap
 Source: RSPM
@@ -580,7 +615,7 @@ Version: 0.4-12
 Hash: 74c5b5447912abf88519b4f9ec82ebd9
 
 Package: pkgbuild
-Source: CRAN
+Source: RSPM
 Version: 1.2.0
 Hash: 5b2b394083875853add40c2d264523f7
 Requires: R6, callr, cli, crayon, desc, prettyunits, rprojroot, withr
@@ -618,7 +653,7 @@ Version: 1.0.0
 Hash: 77da8f1df873a4b91e5c4a68fe2fb1b6
 
 Package: prettyunits
-Source: CRAN
+Source: RSPM
 Version: 1.1.1
 Hash: 20669cd8bb8b3207f6371edf8cf510af
 
@@ -680,7 +715,7 @@ Version: 1.5
 Hash: 35952ae8cf62852f9dfc95901043531c
 
 Package: rcmdcheck
-Source: CRAN
+Source: RSPM
 Version: 1.3.3
 Hash: df2319559a8ed16e5b4d5f99de3e00a0
 Requires: R6, callr, cli, crayon, desc, digest, pkgbuild, prettyunits,
@@ -693,7 +728,7 @@ Hash: b6823f74d6525d39d153620d21e206df
 Requires: tibble
 
 Package: remotes
-Source: CRAN
+Source: RSPM
 Version: 2.3.0
 Hash: 0f210237353687402148f47da02b9968
 
@@ -718,8 +753,8 @@ Package: rmarkdown
 Source: RSPM
 Version: 2.13
 Hash: fe46f09bb8c48d2b97226c8d73fbe528
-Requires: bslib, evaluate, htmltools, jquerylib, jsonlite, knitr,
-    stringr, xfun, yaml, tinytex
+Requires: evaluate, jsonlite, stringr, xfun, yaml, htmltools, tinytex,
+    jquerylib, knitr, bslib
 
 Package: rncl
 Source: RSPM
@@ -728,7 +763,7 @@ Hash: e35f75d3b24a82a0e95dfa737c53dae8
 Requires: Rcpp, progress
 
 Package: roxygen2
-Source: CRAN
+Source: RSPM
 Version: 7.1.1
 Hash: 915845bbd98cf335652e5e331f6bcc97
 Requires: R6, Rcpp, brew, commonmark, desc, digest, pkgload, purrr,
@@ -739,13 +774,19 @@ Source: CRAN
 Version: 2.0.2
 Hash: bdb6a7f2b3c25b8c710615cefdde1af0
 
+Package: rslurm
+Source: RSPM
+Version: 0.6.1
+Hash: 847fa584e010fd1fe9fd6f4645348ca8
+Requires: whisker
+
 Package: rstudioapi
 Source: CRAN
 Version: 0.13
 Hash: dab1619920bed1f1660a3d48e4f7cc7f
 
 Package: rversions
-Source: CRAN
+Source: RSPM
 Version: 2.0.2
 Hash: bf17f00403009644b7e80d2e42f6944b
 Requires: curl, xml2
@@ -766,8 +807,8 @@ Package: scales
 Source: RSPM
 Version: 1.2.0
 Hash: 3acd17505a1c6087b1f1052859edfa4f
-Requires: R6, RColorBrewer, lifecycle, rlang, farver, labeling,
-    munsell, viridisLite
+Requires: R6, lifecycle, rlang, RColorBrewer, farver, labeling,
+    viridisLite, munsell
 
 Package: segmented
 Source: RSPM
@@ -781,7 +822,7 @@ Hash: 9dd7524f56ce05455a2f0f65a79582ea
 Requires: ade4, segmented
 
 Package: sessioninfo
-Source: CRAN
+Source: RSPM
 Version: 1.1.1
 Hash: 9e50c8458e611f166ba702277cbb5096
 Requires: cli, withr
@@ -790,15 +831,15 @@ Package: sf
 Source: RSPM
 Version: 1.0-7
 Hash: 8cd00b51b620f505b936f64412e88220
-Requires: DBI, Rcpp, magrittr, s2, classInt, units
+Requires: Rcpp, magrittr, s2, DBI, classInt, units
 
 Package: shiny
 Source: RSPM
 Version: 1.7.1
 Hash: 7270787dc86efbcfba473df7639fe5cb
-Requires: R6, crayon, ellipsis, glue, jsonlite, lifecycle, mime, rlang,
-    withr, bslib, cachem, commonmark, fastmap, fontawesome, htmltools,
-    httpuv, later, promises, sourcetools, xtable
+Requires: R6, crayon, ellipsis, glue, lifecycle, rlang, withr, bslib,
+    cachem, commonmark, fastmap, fontawesome, htmltools, httpuv,
+    jsonlite, later, mime, promises, sourcetools, xtable
 
 Package: snow
 Source: RSPM
@@ -806,7 +847,7 @@ Version: 0.4-4
 Hash: 72779f4e6833770018917164f265f8ae
 
 Package: sourcetools
-Source: RSPM
+Source: CRAN
 Version: 0.1.7
 Hash: d093478ac90064e670cd4bf1a99b47b6
 
@@ -820,6 +861,22 @@ Source: RSPM
 Version: 2.0.1
 Hash: b9447fb0f144180f6702937cb130e079
 Requires: sp, raster
+
+Package: sparta
+Source: github
+Version: 0.2.19
+Hash: ac7b616dc9170a162af8be185d6d4d3b
+Requires: lme4, LearnBayes, sp, plyr, gdata, reshape2, rmarkdown,
+    dplyr, ggplot2
+GithubRepo: sparta
+GithubUsername: BiologicalRecordsCentre
+GithubRef: HEAD
+GithubSha1: 2973f6dd3aaf02a543d2f27b519ff5caa94582a8
+RemoteHost: api.github.com
+RemoteRepo: sparta
+RemoteUsername: BiologicalRecordsCentre
+RemoteRef: HEAD
+RemoteSha: 2973f6dd3aaf02a543d2f27b519ff5caa94582a8
 
 Package: spatstat.data
 Source: RSPM
@@ -856,7 +913,7 @@ Hash: 67da32dbb2a7a16f2ef124336358e54a
 Requires: glue, magrittr, stringi
 
 Package: sys
-Source: CRAN
+Source: RSPM
 Version: 3.4
 Hash: 7fb0c9e1209a804b329a7df3cd422008
 
@@ -870,16 +927,16 @@ Package: testthat
 Source: CRAN
 Version: 3.0.2
 Hash: 9bcc1a95e57fd187fc8a874107a9220b
-Requires: R6, brio, callr, cli, crayon, desc, digest, ellipsis,
-    evaluate, jsonlite, lifecycle, magrittr, pkgload, processx, ps,
-    rlang, withr, praise, waldo
+Requires: R6, brio, crayon, digest, evaluate, jsonlite, magrittr,
+    praise, ps, rlang, withr, cli, processx, ellipsis, lifecycle, desc,
+    callr, pkgload, waldo
 
 Package: tibble
 Source: CRAN
 Version: 3.1.1
 Hash: 337ee076631c0ea099495237247d941b
-Requires: ellipsis, fansi, lifecycle, magrittr, pillar, rlang, vctrs,
-    pkgconfig
+Requires: ellipsis, fansi, lifecycle, magrittr, rlang, pkgconfig,
+    vctrs, pillar
 
 Package: tidyr
 Source: RSPM
@@ -907,7 +964,7 @@ Hash: 17662039b78440c44e541c87d6247295
 Requires: Rcpp
 
 Package: usethis
-Source: CRAN
+Source: RSPM
 Version: 2.0.1
 Hash: 08a2240c4ec6f4048b36057e6aef3015
 Requires: cli, clipr, crayon, curl, desc, fs, glue, jsonlite,
@@ -951,10 +1008,10 @@ Package: waldo
 Source: CRAN
 Version: 0.2.5
 Hash: 86e2fe83e7da2a7e24da2debfb5ef66c
-Requires: cli, fansi, glue, rlang, tibble, diffobj, rematch2
+Requires: cli, glue, rlang, fansi, diffobj, tibble, rematch2
 
 Package: whisker
-Source: CRAN
+Source: RSPM
 Version: 0.4
 Hash: 5b1ec05cd96c1e0c6048bab49abee3aa
 
@@ -971,17 +1028,12 @@ Hash: a83de57c09a0adbc700aa41181fa7a98
 Package: wrappeR
 Source: github
 Version: 0.2.4
-Hash: c541877e4fb5b8a7938fcec5b3c7f15c
+Hash: 764527e5846df5eaca247c5f844c2534
 Requires: dplyr, pbapply, stringr
 GithubRepo: wrappeR
 GithubUsername: BiologicalRecordsCentre
 GithubRef: main
 GithubSha1: 26dbb5a4d9dcbba1702865442e7c2e9c7721b61b
-RemoteHost: api.github.com
-RemoteRepo: wrappeR
-RemoteUsername: BiologicalRecordsCentre
-RemoteRef: main
-RemoteSha: 26dbb5a4d9dcbba1702865442e7c2e9c7721b61b
 
 Package: xfun
 Source: RSPM
@@ -989,18 +1041,18 @@ Version: 0.30
 Hash: 8a1c1ef1094e9924475383d044035d56
 
 Package: xml2
-Source: CRAN
+Source: RSPM
 Version: 1.3.2
 Hash: edbf29fd0ba88bfabf6b6a4c4db0982b
 
 Package: xopen
-Source: CRAN
+Source: RSPM
 Version: 1.0.0
 Hash: 22c2708f177f9fd9f8a52012bac61d6a
 Requires: processx
 
 Package: xtable
-Source: RSPM
+Source: CRAN
 Version: 1.8-4
 Hash: dc0d47261b678d26032363bebd050540
 
@@ -1010,7 +1062,7 @@ Version: 2.2.1
 Hash: 424bc11cc358f23187feaa7978628196
 
 Package: zip
-Source: CRAN
+Source: RSPM
 Version: 2.1.1
 Hash: 127ef4d13fcabd6851527e5570b7aa5c
 

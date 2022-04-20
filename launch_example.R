@@ -1,11 +1,11 @@
 # code to prepare objects to run occupancy models on high-performance computing
 
 # load libraries
-library('R2jags')
-library('rslurm')
-library('sparta')
-library('reshape2')
-library('coda')
+library(R2jags)
+library(rslurm)
+library(sparta)
+library(reshape2)
+library(coda)
 
 # cleaned and tidied occurrence record data
 # fake data example
@@ -56,7 +56,7 @@ sjob <- rslurm::slurm_apply(f = slurm_occDetFunc,
                             nodes = nrow(pars), 
                             cpus_per_node = 1, 
                             submit = TRUE,
-                            add_objects = c('visitData', 'reg_data', 'region_aggs'),
+                            global_objects = c('visitData', 'reg_data', 'region_aggs'),
                             slurm_options = list(time = '23:59:00', 
                                                  mem = 8 * 1024,
                                                  partition = 'short-serial',

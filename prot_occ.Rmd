@@ -31,11 +31,8 @@ library(cowplot) # cowplot: plotting
 
 # # sparta package from github
 # withr::with_envvar(c(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true"),
-# remotes::install_github("BiologicalRecordsCentre/sparta", force = TRUE))
+# remotes::install_github("BiologicalRecordsCentre/sparta"))
 # library(sparta) # sparta: occupancy models
-
-# # folder saved locally to packrat
-# library(BRCmap) # BRCmap: grid references
 
 # # wrappeR package from github
 # remotes::install_github("https://github.com/BiologicalRecordsCentre/wrappeR", ref = "main")

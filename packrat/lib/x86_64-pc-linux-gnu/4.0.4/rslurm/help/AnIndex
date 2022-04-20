@@ -1,0 +1,13 @@
+rslurm-package	rslurm-package
+cancel_slurm	cancel_slurm
+cleanup_files	cleanup_files
+get_job_status	get_job_status
+get_slurm_out	get_slurm_out
+local_slurm_array	local_slurm_array
+print_job_status	rslurm-deprecated
+print_job_status-deprecated	print_job_status-deprecated
+rslurm-deprecated	rslurm-deprecated
+slurm_apply	slurm_apply
+slurm_call	slurm_call
+slurm_job	slurm_job
+slurm_map	slurm_map

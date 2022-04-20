@@ -1408,7 +1408,7 @@ spatBias_tax_comb_leg <- cowplot::plot_grid(spatBias_tax_comb, spatBias_tax_leg,
 spatBias_tax_comb2 <- cowplot::ggdraw(spatBias_tax_comb_leg) +
   ggplot2::theme(plot.background = element_rect(fill = "white", color = NA))
 
-cowplot::save_plot("occ_assess/figs5_spat_bias_tax.png", spatBias_tax_comb2, base_height = 8, base_aspect_ratio = 1, dpi = 300)
+# cowplot::save_plot("outputs/figs5_spat_bias_tax.png", spatBias_tax_comb2, base_height = 8, base_aspect_ratio = 1, dpi = 300)
 
 ## repeat visits ##
 
@@ -1481,17 +1481,17 @@ rep_maps_unp <- lapply(unique(rep_vis$tax_grp), function(x) {rep_plot(tax = x, p
 # ants, bees
 rep_ab <- cowplot::plot_grid(rep_maps_pa[[1]], rep_maps_unp[[1]], rep_maps_pa[[2]], rep_maps_unp[[2]], ncol = 2)
 
-cowplot::save_plot("outputs/figs6_rep_ab.png", rep_ab, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
+# cowplot::save_plot("outputs/figs6_rep_ab.png", rep_ab, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
 
 # hoverflies, ladybirds
 rep_hl <- cowplot::plot_grid(rep_maps_pa[[3]], rep_maps_unp[[3]], rep_maps_pa[[4]], rep_maps_unp[[4]], ncol = 2)
 
-cowplot::save_plot("outputs/figs7_rep_hl.png", rep_hl, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
+# cowplot::save_plot("outputs/figs7_rep_hl.png", rep_hl, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
 
 # spiders, wasps
 rep_sw <- cowplot::plot_grid(rep_maps_pa[[5]], rep_maps_unp[[5]], rep_maps_pa[[6]], rep_maps_unp[[6]], ncol = 2)
 
-cowplot::save_plot("outputs/figs8_rep_sw.png", rep_sw, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
+# cowplot::save_plot("outputs/figs8_rep_sw.png", rep_sw, base_height = 12, base_aspect_ratio = 0.5, dpi = 300)
 
 ```
 
